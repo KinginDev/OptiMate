@@ -1,0 +1,7 @@
+FROM alpine:latest  
+
+RUN mkdir app
+
+COPY ./bin/userService /app/userService
+
+CMD ["/app/userService"]
