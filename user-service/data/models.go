@@ -24,7 +24,6 @@ type PersonalToken struct {
 
 var db *gorm.DB
 
-// Annotate
 func New(dbPool *gorm.DB) Models {
 	db = dbPool
 	return Models{
