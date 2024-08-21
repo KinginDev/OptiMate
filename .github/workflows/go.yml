@@ -21,11 +21,11 @@ jobs:
     - name: Install Go dependencies
       # run: cd ./user-service && go mod tidy && go mod download
       run: go mod tidy
-      working-directory: user-service/cmd/api 
+      working-directory: user-service
 
     - name: Build
-      run: go build -v main.go
-      working-directory: user-service/cmd/api 
+      run: go build -o user-service ./cmd/api/main.go
+      working-directory: user-service
 
     # - name: Test
     #   run: go test -v ./user-service/...
