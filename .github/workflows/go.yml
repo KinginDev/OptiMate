@@ -18,11 +18,14 @@ jobs:
       with:
         go-version: '1.22.3'
 
-    - name: Instal Go dependencies
-      run: cd ./user-service && go mod tidy
+    - name: Install Go dependencies
+      # run: cd ./user-service && go mod tidy && go mod download
+      run: go mod tidy
+      working-directory: user-service/cmd/api 
 
     - name: Build
-      run: go build -v ./user-service/cmd/api/main.go
+      run: go build -v main.go
+      working-directory: user-service/cmd/api 
 
     # - name: Test
     #   run: go test -v ./user-service/...
