@@ -21,3 +21,6 @@ jobs:
 
     - name: Build
       run: go build -v ./user-service/cmd/api
+
+    # - name: Test
+    #   run: go test -v ./user-service/...
