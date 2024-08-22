@@ -9,3 +9,8 @@ build_backend: build_user_service
 	@echo "Building backend"
 	docker-compose up --build -d
 	@echo "Backend build completed"
+
+down:
+	@echo "Stopping backend"
+	docker-compose down
+	@echo "Backend stopped"
