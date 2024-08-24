@@ -1,38 +1,52 @@
 package main
 
 import (
-	"net/http"
-
-	"user-service/config"
+	"log"
+	"user-service/cmd/api/handler"
+	"user-service/cmd/api/validators"
+	"user-service/cmd/config"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
-
-//
-
-// create a response struct to add the response data, status, message,headers etc
-type JsonResponse struct {
-	Data    string `json:"data"`
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
 
 func main() {
 	app := &config.Config{}
-	app.InitDB()
-	// models := data.New(db)
+	db := app.InitDB()
+
+	if db == nil {
+		log.Fatalf("Could not connect to the database.")
+		return
+	}
+
+	// Create new handler instance with the db instance
+	h := handler.NewHandler(db)
 
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-		response := &JsonResponse{
-			Data:    "Test Data",
-			Message: "Test Message",
-			Status:  http.StatusOK,
-		}
+	// CORS
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+	}))
 
-		return c.JSON(response.Status, response)
-	})
+	// add validator to middleware
+	e.Validator = &validators.CustomValidator{}
+
+	e.GET("/", h.Index)
+	e.POST("/register", h.Register)
+	e.POST("/login", h.Login)
+
+	// Docs Routes
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+
+	// Serve docs directly
+	// e.GET("/docs/swagger.json", func(c echo.Context) error {
+	// 	return c.File("./docs/swagger.json")
+	// })
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
