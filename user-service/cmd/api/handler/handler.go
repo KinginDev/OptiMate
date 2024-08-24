@@ -172,3 +172,26 @@ func (h *Handler) Login(c echo.Context) error {
 	})
 
 }
+
+func (h *Handler) GetUserTokens(c echo.Context) error {
+	userID := c.Get("userId").(string)
+
+	var u models.User
+
+	user, err := u.GetUserByID(h.DB, userID)
+	if err != nil {
+		return h.Config.WriteErrorResponse(c, http.StatusNotFound, "User not found")
+	}
+
+	tokens, err := models.GetTokensByUserID(h.DB, user.ID)
+	if err != nil {
+		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to fetch tokens")
+	}
+
+	response := map[string]interface{}{
+		"user":   user,
+		"tokens": tokens,
+	}
+
+	return h.Config.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
+}

@@ -3,6 +3,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -27,7 +28,8 @@ func setUpTest() (*echo.Echo, *gorm.DB) {
 	// Migrate the schema for the test database
 	err := db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 	if err != nil {
-		panic(err)
+		fmt.Println("Error migrating the schema")
+		return nil, nil
 	}
 
 	return e, db

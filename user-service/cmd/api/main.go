@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"user-service/cmd/api/handler"
+	interceptor "user-service/cmd/api/middleware"
 	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
 
@@ -26,6 +27,8 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	// Middleware
+	e.Use(interceptor.JWTAuthentication)
 
 	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -39,6 +42,7 @@ func main() {
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
+	e.POST("/tokens", h.GetUserTokens)
 
 	// Docs Routes
 	e.GET("/docs/*", echoSwagger.WrapHandler)

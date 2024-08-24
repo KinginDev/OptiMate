@@ -31,7 +31,8 @@ func (c *Config) InitDB() *gorm.DB {
 			log.Printf("Connected to database")
 			err = db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 			if err != nil {
-				panic(err)
+				fmt.Println("Error migrating the schema")
+				return nil
 			}
 			return db
 		}
