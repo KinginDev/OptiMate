@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"gorm.io/gorm"
 )
 
@@ -42,6 +43,9 @@ func main() {
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
+
+	// Routes
+	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
