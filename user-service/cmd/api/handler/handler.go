@@ -140,7 +140,7 @@ func (h *Handler) Login(c echo.Context) error {
 		return h.Config.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid password")
 	}
 
-	// Generate new JWT token fork user
+	// Generate new JWT token for user
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
