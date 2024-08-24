@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 	"time"
-	"user-service/data"
+	"user-service/models"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -40,7 +40,7 @@ func (h *Handler) Index(c echo.Context) error {
 }
 
 func (h *Handler) Register(c echo.Context) error {
-	u := new(data.User)
+	u := new(models.User)
 
 	/**
 		The Bind function helps to map the incoming
@@ -48,6 +48,28 @@ func (h *Handler) Register(c echo.Context) error {
 	**/
 	if err := c.Bind(u); err != nil {
 		return err
+	}
+
+	//validate input fields
+	if err := c.Validate(u); err != nil {
+		errResponsePayload := &JsonResponse{
+			Data:    "",
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		}
+		return c.JSON(errResponsePayload.Status, errResponsePayload)
+	}
+
+	//check if email already exists
+	var count int64
+	h.DB.Where("email = ?", u.Email).Find(&models.User{}).Count(&count)
+	if count > 0 {
+		errResponsePayload := &JsonResponse{
+			Data:    "",
+			Message: "Email already exists",
+			Status:  http.StatusConflict,
+		}
+		return c.JSON(errResponsePayload.Status, errResponsePayload)
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
@@ -62,7 +84,7 @@ func (h *Handler) Register(c echo.Context) error {
 		errResponsePayload := &JsonResponse{
 			Data:    "",
 			Message: "Failed to create user",
-			Status:  http.StatusInternalServerError,
+			Status:  http.StatusBadRequest,
 		}
 		return c.JSON(errResponsePayload.Status, errResponsePayload)
 	}
@@ -87,7 +109,7 @@ func (h *Handler) Register(c echo.Context) error {
 }
 
 func (h *Handler) Login(c echo.Context) error {
-	u := new(data.User)
+	u := new(models.User)
 	if err := c.Bind(u); err != nil {
 		errorResponseJson := &JsonResponse{
 			Data:    "",
@@ -97,7 +119,17 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(errorResponseJson.Status, errorResponseJson)
 	}
 
-	var user data.User
+	//validate input fields
+	if err := c.Validate(u); err != nil {
+		errResponsePayload := &JsonResponse{
+			Data:    "",
+			Message: err.Error(),
+			Status:  http.StatusBadRequest,
+		}
+		return c.JSON(errResponsePayload.Status, errResponsePayload)
+	}
+
+	var user models.User
 
 	//Query the database to find the user with the email
 	if err := h.DB.Where("email = ?", u.Email).First(&user).Error; err != nil {
@@ -137,7 +169,7 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(errorResponseJson.Status, errorResponseJson)
 	}
 
-	personalToken := &data.PersonalToken{
+	personalToken := &models.PersonalToken{
 		ID:        uuid.New().String(),
 		UserID:    user.ID,
 		Token:     t,

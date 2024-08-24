@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"time"
-	"user-service/data"
+	"user-service/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	Database *gorm.DB
-	Models   data.Models
+	Models   models.Models
 }
 
 var counts int64
@@ -28,7 +28,7 @@ func (c *Config) InitDB() *gorm.DB {
 			counts++
 		} else {
 			log.Printf("Connected to database")
-			db.AutoMigrate(&data.User{}, &data.PersonalToken{})
+			db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 			return db
 		}
 

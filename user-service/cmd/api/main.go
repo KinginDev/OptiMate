@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"user-service/cmd/api/handler"
+	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
 
 	"github.com/labstack/echo/v4"
@@ -34,6 +35,9 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	//add validator to middleware
+	e.Validator = &validators.CustomValidator{}
 
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
