@@ -1,4 +1,4 @@
-// Package middleware
+// Package interceptor
 package interceptor
 
 import (

@@ -49,7 +49,10 @@ func (app *Config) GenerateJWTToken(userID string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	// Set claims
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("Invalid token")
+	}
 	claims["user_id"] = userID
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
