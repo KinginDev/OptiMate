@@ -35,3 +35,14 @@ func (u *User) CreateUser(db *gorm.DB, email, password string) error {
 
 	return db.Create(user).Error
 }
+
+func (u *User) GetUserByEmail(db *gorm.DB, email string) (*User, error) {
+	user := &User{}
+	err := db.Where("email = ?", email).First(user).Error
+	return user, err
+}
+
+func (u *User) ComparePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}

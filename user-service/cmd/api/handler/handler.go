@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 	"user-service/models"
+	"user-service/utils"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -14,7 +15,13 @@ import (
 
 // Handler struct to hold the db instance
 type Handler struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Config *utils.Config
+}
+
+type UserJsonResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
 }
 
 // NewHandler function to initialize the handler with the given DB instance
@@ -63,51 +70,33 @@ func (h *Handler) Register(c echo.Context) error {
 		JSON request body to the corresponding struct
 	**/
 	if err := c.Bind(u); err != nil {
-		return err
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	//validate input fields
 	if err := c.Validate(u); err != nil {
-		errResponsePayload := &JsonResponse{
-			Data:    "",
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		}
-		return c.JSON(errResponsePayload.Status, errResponsePayload)
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	//check if email already exists
 	var count int64
 	h.DB.Where("email = ?", u.Email).Find(&models.User{}).Count(&count)
 	if count > 0 {
-		errResponsePayload := &JsonResponse{
-			Data:    "",
-			Message: "Email already exists",
-			Status:  http.StatusConflict,
-		}
-		return c.JSON(errResponsePayload.Status, errResponsePayload)
+		return h.Config.WriteErrorResponse(c, http.StatusConflict, "Email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
 	}
 
 	u.Password = string(hashedPassword)
 	u.ID = uuid.New().String()
 
-	if err := h.DB.Create(&u).Error; err != nil {
-		errResponsePayload := &JsonResponse{
-			Data:    "",
-			Message: "Failed to create user",
-			Status:  http.StatusBadRequest,
-		}
-		return c.JSON(errResponsePayload.Status, errResponsePayload)
-	}
-
-	type UserJsonResponse struct {
-		ID    string `json:"id"`
-		Email string `json:"email"`
+	//create the user
+	err = u.CreateUser(h.DB, u.Email, u.Password)
+	if err != nil {
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
 	}
 
 	userJsonResponse := &UserJsonResponse{
@@ -115,12 +104,7 @@ func (h *Handler) Register(c echo.Context) error {
 		Email: u.Email,
 	}
 
-	responsePayload := &JsonResponse{
-		Data:    userJsonResponse,
-		Message: "User created successfully",
-		Status:  http.StatusCreated,
-	}
-	return c.JSON(responsePayload.Status, responsePayload)
+	return h.Config.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", userJsonResponse)
 
 }
 
@@ -136,46 +120,23 @@ func (h *Handler) Register(c echo.Context) error {
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {
-		errorResponseJson := &JsonResponse{
-			Data:    "",
-			Message: "Invalid request payload",
-			Status:  http.StatusBadRequest,
-		}
-		return c.JSON(errorResponseJson.Status, errorResponseJson)
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	//validate input fields
 	if err := c.Validate(u); err != nil {
-		errResponsePayload := &JsonResponse{
-			Data:    "",
-			Message: err.Error(),
-			Status:  http.StatusBadRequest,
-		}
-		return c.JSON(errResponsePayload.Status, errResponsePayload)
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
-
-	var user models.User
 
 	//Query the database to find the user with the email
-	if err := h.DB.Where("email = ?", u.Email).First(&user).Error; err != nil {
-		errorResponseJson := &JsonResponse{
-			Data:    "",
-			Message: "User not found",
-			Status:  http.StatusNotFound,
-		}
-		return c.JSON(errorResponseJson.Status, errorResponseJson)
+	user, err := u.GetUserByEmail(h.DB, u.Email)
+	if err != nil {
+		return h.Config.WriteErrorResponse(c, http.StatusNotFound, "User not found")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password),
-		[]byte(u.Password)); err != nil {
-
-		errorResponseJson := &JsonResponse{
-			Data:    "",
-			Message: "Invalid password",
-			Status:  http.StatusUnauthorized,
-		}
-		return c.JSON(errorResponseJson.Status, errorResponseJson)
-
+	//compare the password
+	if err := user.ComparePassword(u.Password); !err {
+		return h.Config.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid password")
 	}
 
 	//Generate new JWT token fork user
@@ -186,12 +147,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		errorResponseJson := &JsonResponse{
-			Data:    "",
-			Message: "Failed to generate token",
-			Status:  http.StatusInternalServerError,
-		}
-		return c.JSON(errorResponseJson.Status, errorResponseJson)
+		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
 	personalToken := &models.PersonalToken{
@@ -203,19 +159,12 @@ func (h *Handler) Login(c echo.Context) error {
 	}
 
 	if err := h.DB.Create(personalToken).Error; err != nil {
-		errorResponseJson := &JsonResponse{
-			Data:    "",
-			Message: "Failed to create token",
-			Status:  http.StatusInternalServerError,
-		}
-		return c.JSON(errorResponseJson.Status, errorResponseJson)
+		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
-	responsePayload := &JsonResponse{
-		Data:    personalToken,
-		Message: "Login successful",
-		Status:  http.StatusOK,
-	}
+	return h.Config.WriteSuccessResponse(c, http.StatusOK, "Login successful", map[string]string{
+		"email": user.Email,
+		"token": t,
+	})
 
-	return c.JSON(responsePayload.Status, responsePayload)
 }

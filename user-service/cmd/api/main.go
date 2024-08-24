@@ -14,13 +14,6 @@ import (
 
 var db *gorm.DB
 
-// create a response struct to add the response data, status, message,headers etc
-type JsonResponse struct {
-	Data    string `json:"data"`
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-}
-
 func main() {
 	app := &config.Config{}
 	db := app.InitDB()
