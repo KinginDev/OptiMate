@@ -7,7 +7,6 @@ import (
 	"user-service/models"
 	"user-service/utils"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -141,15 +140,10 @@ func (h *Handler) Login(c echo.Context) error {
 	}
 
 	// Generate new JWT token for user
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to validate token")
+	t, err := h.Config.GenerateJWTToken(user.ID)
+	if err != nil {
+		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
-	claims["user_id"] = user.ID
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-
-	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
@@ -174,7 +168,11 @@ func (h *Handler) Login(c echo.Context) error {
 }
 
 func (h *Handler) GetUserTokens(c echo.Context) error {
-	userID := c.Get("userId").(string)
+	userID, ok := c.Get("userID").(string)
+
+	if !ok {
+		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "UserID parameter is required")
+	}
 
 	var u models.User
 
@@ -189,8 +187,11 @@ func (h *Handler) GetUserTokens(c echo.Context) error {
 	}
 
 	response := map[string]interface{}{
-		"user":   user,
-		"tokens": tokens,
+		"user": map[string]interface{}{
+			"id":    user.ID,
+			"email": user.Email,
+		},
+		"tokens": tokens[len(tokens)-1],
 	}
 
 	return h.Config.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
