@@ -30,6 +30,12 @@ type JsonResponse struct {
 	Message string      `json:"message"`
 }
 
+// Index godoc
+// @Summary User service is running
+// @Description User service is running
+// @Success 200 {object} nil "success"
+// @Failure 404 {object} nil "Not Found"
+// @Router / [get]
 func (h *Handler) Index(c echo.Context) error {
 	response := &JsonResponse{
 		Data:    "Welcome to the User Service!",
@@ -39,6 +45,16 @@ func (h *Handler) Index(c echo.Context) error {
 	return c.JSON(response.Status, response)
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user
+// @Accept json
+// @Produce json
+// @Success 201 {object} JsonResponse "User created successfully"
+// @Failure 400 {object} JsonResponse "Invalid request payload"
+// @Failure 400 {object} JsonResponse "Failed to create user"
+// @Failure 409 {object} JsonResponse "Email already exists"
+// @Router /register [post]
 func (h *Handler) Register(c echo.Context) error {
 	u := new(models.User)
 
@@ -108,6 +124,15 @@ func (h *Handler) Register(c echo.Context) error {
 
 }
 
+// Login godoc
+// @Summary Login a user
+// @Description Login a user
+// @Accept json
+// @Produce json
+// @Success 200 {object} JsonResponse "Login successful"
+// @Failure 400 {object} JsonResponse "Invalid request payload"
+// @Failure 401 {object} JsonResponse "Invalid password"
+// @Failure 404 {object} JsonResponse "User not found"
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {

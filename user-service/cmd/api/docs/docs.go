@@ -14,13 +14,74 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/": {
+            "get": {
+                "description": "User service is running",
+                "summary": "User service is running",
+                "responses": {
+                    "200": {
+                        "description": "success"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Register a new user",
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handler.JsonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Failed to create user",
+                        "schema": {
+                            "$ref": "#/definitions/handler.JsonResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already exists",
+                        "schema": {
+                            "$ref": "#/definitions/handler.JsonResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.JsonResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
+	Version:          "0.1.0",
+	Host:             "localhost:8020",
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "",

@@ -37,6 +37,12 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	//CORS
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+	}))
+
 	//add validator to middleware
 	e.Validator = &validators.CustomValidator{}
 
@@ -44,8 +50,13 @@ func main() {
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
 
-	// Routes
+	// Docs Routes
 	e.GET("/docs/*", echoSwagger.WrapHandler)
+
+	// Serve docs directly
+	// e.GET("/docs/swagger.json", func(c echo.Context) error {
+	// 	return c.File("./docs/swagger.json")
+	// })
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
