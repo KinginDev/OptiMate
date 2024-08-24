@@ -43,19 +43,19 @@ const docTemplate = `{
                     "201": {
                         "description": "User created successfully",
                         "schema": {
-                            "$ref": "#/definitions/handler.JsonResponse"
+                            "$ref": "#/definitions/handler.JSONResponse"
                         }
                     },
                     "400": {
                         "description": "Failed to create user",
                         "schema": {
-                            "$ref": "#/definitions/handler.JsonResponse"
+                            "$ref": "#/definitions/handler.JSONResponse"
                         }
                     },
                     "409": {
                         "description": "Email already exists",
                         "schema": {
-                            "$ref": "#/definitions/handler.JsonResponse"
+                            "$ref": "#/definitions/handler.JSONResponse"
                         }
                     }
                 }
@@ -63,7 +63,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.JsonResponse": {
+        "handler.JSONResponse": {
             "type": "object",
             "properties": {
                 "data": {},

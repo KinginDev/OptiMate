@@ -9,10 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"gorm.io/gorm"
 )
-
-var db *gorm.DB
 
 func main() {
 	app := &config.Config{}
@@ -30,13 +27,13 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	//CORS
+	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
-	//add validator to middleware
+	// add validator to middleware
 	e.Validator = &validators.CustomValidator{}
 
 	e.GET("/", h.Index)

@@ -1,3 +1,4 @@
+// Package models contains the User struct,
 package models
 
 import (

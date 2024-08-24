@@ -1,3 +1,4 @@
+// Package config
 package config
 
 import (
@@ -28,7 +29,10 @@ func (c *Config) InitDB() *gorm.DB {
 			counts++
 		} else {
 			log.Printf("Connected to database")
-			db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+			err = db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+			if err != nil {
+				panic(err)
+			}
 			return db
 		}
 

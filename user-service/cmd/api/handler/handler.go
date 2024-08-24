@@ -1,3 +1,4 @@
+// Package handler contains the route functions for the user service
 package handler
 
 import (
@@ -19,7 +20,7 @@ type Handler struct {
 	Config *utils.Config
 }
 
-type UserJsonResponse struct {
+type UserJSONResponse struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 }
@@ -31,7 +32,7 @@ func NewHandler(db *gorm.DB) *Handler {
 	}
 }
 
-type JsonResponse struct {
+type JSONResponse struct {
 	Data    interface{} `json:"data"`
 	Status  int         `json:"status"`
 	Message string      `json:"message"`
@@ -44,7 +45,7 @@ type JsonResponse struct {
 // @Failure 404 {object} nil "Not Found"
 // @Router / [get]
 func (h *Handler) Index(c echo.Context) error {
-	response := &JsonResponse{
+	response := &JSONResponse{
 		Data:    "Welcome to the User Service!",
 		Message: "Service is running.",
 		Status:  http.StatusOK,
@@ -57,10 +58,10 @@ func (h *Handler) Index(c echo.Context) error {
 // @Description Register a new user
 // @Accept json
 // @Produce json
-// @Success 201 {object} JsonResponse "User created successfully"
-// @Failure 400 {object} JsonResponse "Invalid request payload"
-// @Failure 400 {object} JsonResponse "Failed to create user"
-// @Failure 409 {object} JsonResponse "Email already exists"
+// @Success 201 {object} JSONResponse "User created successfully"
+// @Failure 400 {object} JSONResponse "Invalid request payload"
+// @Failure 400 {object} JSONResponse "Failed to create user"
+// @Failure 409 {object} JSONResponse "Email already exists"
 // @Router /register [post]
 func (h *Handler) Register(c echo.Context) error {
 	u := new(models.User)
@@ -73,12 +74,12 @@ func (h *Handler) Register(c echo.Context) error {
 		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
-	//validate input fields
+	// validate input fields
 	if err := c.Validate(u); err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	//check if email already exists
+	// check if email already exists
 	var count int64
 	h.DB.Where("email = ?", u.Email).Find(&models.User{}).Count(&count)
 	if count > 0 {
@@ -93,18 +94,18 @@ func (h *Handler) Register(c echo.Context) error {
 	u.Password = string(hashedPassword)
 	u.ID = uuid.New().String()
 
-	//create the user
+	// Create the user
 	err = u.CreateUser(h.DB, u.Email, u.Password)
 	if err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
 	}
 
-	userJsonResponse := &UserJsonResponse{
+	UserJSONResponse := &UserJSONResponse{
 		ID:    u.ID,
 		Email: u.Email,
 	}
 
-	return h.Config.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", userJsonResponse)
+	return h.Config.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
 
 }
 
@@ -113,35 +114,38 @@ func (h *Handler) Register(c echo.Context) error {
 // @Description Login a user
 // @Accept json
 // @Produce json
-// @Success 200 {object} JsonResponse "Login successful"
-// @Failure 400 {object} JsonResponse "Invalid request payload"
-// @Failure 401 {object} JsonResponse "Invalid password"
-// @Failure 404 {object} JsonResponse "User not found"
+// @Success 200 {object} JSONResponse "Login successful"
+// @Failure 400 {object} JSONResponse "Invalid request payload"
+// @Failure 401 {object} JSONResponse "Invalid password"
+// @Failure 404 {object} JSONResponse "User not found"
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
-	//validate input fields
+	// validate input fields
 	if err := c.Validate(u); err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	//Query the database to find the user with the email
+	// Query the database to find the user with the email
 	user, err := u.GetUserByEmail(h.DB, u.Email)
 	if err != nil {
 		return h.Config.WriteErrorResponse(c, http.StatusNotFound, "User not found")
 	}
 
-	//compare the password
+	// compare the password
 	if err := user.ComparePassword(u.Password); !err {
 		return h.Config.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid password")
 	}
 
-	//Generate new JWT token fork user
+	// Generate new JWT token fork user
 	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to validate token")
+	}
 	claims["user_id"] = user.ID
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 

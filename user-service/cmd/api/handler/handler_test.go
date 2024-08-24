@@ -1,3 +1,4 @@
+// package: handler Test cases for the handler package
 package handler
 
 import (
@@ -23,8 +24,11 @@ func setUpTest() (*echo.Echo, *gorm.DB) {
 	// use an in-memory SQLite database for testing
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 
-	//Migrate the schema for the test database
-	db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+	// Migrate the schema for the test database
+	err := db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+	if err != nil {
+		panic(err)
+	}
 
 	return e, db
 }
@@ -36,7 +40,7 @@ func TestIndexSuccess(t *testing.T) {
 		Database: db,
 	}
 
-	//Create a new Http Request
+	// Create a new Http Request
 	req := httptest.NewRequest(http.MethodPost, "/", nil)
 
 	/**
@@ -60,7 +64,7 @@ func TestIndexSuccess(t *testing.T) {
 	// Create a new handler instance
 	h := NewHandler(db)
 
-	//Execute the handler
+	// Execute the handler
 	if assert.NoError(t, h.Index(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "Welcome to the User Service!")
@@ -75,13 +79,13 @@ func RegisterSuccessTest(t *testing.T) {
 		Database: db,
 	}
 
-	//Create a new Http Request
+	// Create a new Http Request
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
 		"email": "test@doe.com"
 		"password": "password"
 	}`))
 
-	//set header to application/json
+	// set header to application/json
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 	/**
@@ -105,7 +109,7 @@ func RegisterSuccessTest(t *testing.T) {
 	// Create a new handler instance
 	h := NewHandler(db)
 
-	//Execute the handler
+	// Execute the handler
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Contains(t, rec.Body.String(), "User Registered Successfully")
@@ -197,7 +201,7 @@ func TestLoginSuccess(t *testing.T) {
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response JsonResponse
+		var response JSONResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 

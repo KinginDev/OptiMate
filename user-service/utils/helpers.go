@@ -1,3 +1,4 @@
+// Package utils
 package utils
 
 import (
@@ -9,16 +10,16 @@ type Config struct {
 	DB *gorm.DB
 }
 
-// create a response struct to add the response data, status, message,headers etc
-type JsonResponse struct {
+// JSONResponse is a type that defines the structure of a JSON response.
+type JSONResponse struct {
 	Data    interface{} `json:"data"`
 	Status  int         `json:"status"`
-	Success bool        `json:"status"`
+	Success bool        `json:"success"`
 	Message string      `json:"message"`
 }
 
 func (app *Config) WriteErrorResponse(c echo.Context, status int, message string) error {
-	response := &JsonResponse{
+	response := &JSONResponse{
 		Data:    nil,
 		Message: message,
 		Success: false,
@@ -28,7 +29,7 @@ func (app *Config) WriteErrorResponse(c echo.Context, status int, message string
 }
 
 func (app *Config) WriteSuccessResponse(c echo.Context, status int, message string, data interface{}) error {
-	response := &JsonResponse{
+	response := &JSONResponse{
 		Data:    data,
 		Message: message,
 		Success: true,
