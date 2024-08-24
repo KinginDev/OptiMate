@@ -11,6 +11,7 @@ import (
 	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
 	"user-service/models"
+	"user-service/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,7 @@ func TestIndexSuccess(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	// Create a new Http Request
@@ -64,7 +65,10 @@ func TestIndexSuccess(t *testing.T) {
 	c.Set("config", config)
 
 	// Create a new handler instance
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	// Execute the handler
 	if assert.NoError(t, h.Index(c)) {
@@ -78,7 +82,7 @@ func RegisterSuccessTest(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	// Create a new Http Request
@@ -109,7 +113,10 @@ func RegisterSuccessTest(t *testing.T) {
 	c.Set("config", config)
 
 	// Create a new handler instance
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	// Execute the handler
 	if assert.NoError(t, h.Register(c)) {
@@ -123,7 +130,7 @@ func TestRegisterInvaidData(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
@@ -137,7 +144,10 @@ func TestRegisterInvaidData(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("config", config)
 
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -150,7 +160,7 @@ func TestRegisterWithExistingEmail(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	u := &models.User{}
@@ -168,7 +178,10 @@ func TestRegisterWithExistingEmail(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("config", config)
 
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusConflict, rec.Code)
@@ -180,7 +193,7 @@ func TestLoginSuccess(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	u := &models.User{}
@@ -198,7 +211,10 @@ func TestLoginSuccess(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("config", config)
 
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -217,7 +233,7 @@ func TestLoginInvalidData(t *testing.T) {
 	e, db := setUpTest()
 
 	config := &config.Config{
-		Database: db,
+		DB: db,
 	}
 
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{
@@ -231,7 +247,10 @@ func TestLoginInvalidData(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("config", config)
 
-	h := NewHandler(db)
+	utils := &utils.Utils{
+		DB: db,
+	}
+	h := NewHandler(db, utils)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

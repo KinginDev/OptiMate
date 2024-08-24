@@ -13,7 +13,7 @@ import (
 // JWTAuthentication Middleware function to handle JWT authentication
 func JWTAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		app := &utils.Config{}
+		u := &utils.Utils{}
 		authorizationHeader := c.Request().Header.Get("Authorization")
 		if authorizationHeader == "" {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Authorization header is required")
@@ -21,7 +21,7 @@ func JWTAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authorizationHeader, "Bearer ")
 
-		userID, err := app.ValidateJWTToken(tokenString)
+		userID, err := u.ValidateJWTToken(tokenString)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate token")
 		}

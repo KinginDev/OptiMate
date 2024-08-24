@@ -15,8 +15,8 @@ import (
 
 // Handler struct to hold the db instance
 type Handler struct {
-	DB     *gorm.DB
-	Config *utils.Config
+	DB    *gorm.DB
+	Utils *utils.Utils
 }
 
 type UserJSONResponse struct {
@@ -25,9 +25,10 @@ type UserJSONResponse struct {
 }
 
 // NewHandler function to initialize the handler with the given DB instance
-func NewHandler(db *gorm.DB) *Handler {
+func NewHandler(db *gorm.DB, utils *utils.Utils) *Handler {
 	return &Handler{
-		DB: db,
+		DB:    db,
+		Utils: utils,
 	}
 }
 
@@ -70,24 +71,24 @@ func (h *Handler) Register(c echo.Context) error {
 		JSON request body to the corresponding struct
 	**/
 	if err := c.Bind(u); err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	// validate input fields
 	if err := c.Validate(u); err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	// check if email already exists
 	var count int64
 	h.DB.Where("email = ?", u.Email).Find(&models.User{}).Count(&count)
 	if count > 0 {
-		return h.Config.WriteErrorResponse(c, http.StatusConflict, "Email already exists")
+		return h.Utils.WriteErrorResponse(c, http.StatusConflict, "Email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
 	}
 
 	u.Password = string(hashedPassword)
@@ -96,7 +97,7 @@ func (h *Handler) Register(c echo.Context) error {
 	// Create the user
 	err = u.CreateUser(h.DB, u.Email, u.Password)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Failed to create user")
 	}
 
 	UserJSONResponse := &UserJSONResponse{
@@ -104,7 +105,7 @@ func (h *Handler) Register(c echo.Context) error {
 		Email: u.Email,
 	}
 
-	return h.Config.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
+	return h.Utils.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
 
 }
 
@@ -120,32 +121,32 @@ func (h *Handler) Register(c echo.Context) error {
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	// validate input fields
 	if err := c.Validate(u); err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	// Query the database to find the user with the email
 	user, err := u.GetUserByEmail(h.DB, u.Email)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusNotFound, "User not found")
+		return h.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
 	}
 
 	// compare the password
 	if err := user.ComparePassword(u.Password); !err {
-		return h.Config.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid password")
+		return h.Utils.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid password")
 	}
 
 	// Generate new JWT token for user
-	t, err := h.Config.GenerateJWTToken(user.ID)
+	t, err := h.Utils.GenerateJWTToken(user.ID)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
 	personalToken := &models.PersonalToken{
@@ -157,33 +158,42 @@ func (h *Handler) Login(c echo.Context) error {
 	}
 
 	if err := h.DB.Create(personalToken).Error; err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
-	return h.Config.WriteSuccessResponse(c, http.StatusOK, "Login successful", map[string]string{
+	return h.Utils.WriteSuccessResponse(c, http.StatusOK, "Login successful", map[string]string{
 		"email": user.Email,
 		"token": t,
 	})
 
 }
 
+// GetUserTokens godoc
+// @Summary  get toksn
+// @Description gets all the authorization token belongin to a user
+// @Accept json
+// @Produce json
+// @Success 200 (object) JSONResponse "User tokens retrieved successfully"
+// @Faliure 400 (object) JSONResponse "User not found"
+// @Faliure 404 (object) JSONResponse "User not found"
+// @Faliure 500 (object) JSONResponse "Failed to fetch tokens"
 func (h *Handler) GetUserTokens(c echo.Context) error {
 	userID, ok := c.Get("userID").(string)
 
 	if !ok {
-		return h.Config.WriteErrorResponse(c, http.StatusBadRequest, "UserID parameter is required")
+		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "User not found")
 	}
 
 	var u models.User
 
 	user, err := u.GetUserByID(h.DB, userID)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusNotFound, "User not found")
+		return h.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
 	}
 
 	tokens, err := models.GetTokensByUserID(h.DB, user.ID)
 	if err != nil {
-		return h.Config.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to fetch tokens")
+		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to fetch tokens")
 	}
 
 	response := map[string]interface{}{
@@ -194,5 +204,5 @@ func (h *Handler) GetUserTokens(c echo.Context) error {
 		"tokens": tokens[len(tokens)-1],
 	}
 
-	return h.Config.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
+	return h.Utils.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
 }

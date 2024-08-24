@@ -7,4 +7,5 @@ type PersonalToken struct {
 	Token     string `json:"token" gorm:"unique;not null"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+	Revoked   bool   `json:"revoked"`
 }

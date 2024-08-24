@@ -2,9 +2,7 @@
 package utils
 
 import (
-	"fmt"
 	"time"
-	"user-service/models"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -12,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Config struct {
+type Utils struct {
 	DB *gorm.DB
 }
 
@@ -24,7 +22,7 @@ type JSONResponse struct {
 	Message string      `json:"message"`
 }
 
-func (app *Config) WriteErrorResponse(c echo.Context, status int, message string) error {
+func (u *Utils) WriteErrorResponse(c echo.Context, status int, message string) error {
 	response := &JSONResponse{
 		Data:    nil,
 		Message: message,
@@ -34,7 +32,7 @@ func (app *Config) WriteErrorResponse(c echo.Context, status int, message string
 	return c.JSON(status, response)
 }
 
-func (app *Config) WriteSuccessResponse(c echo.Context, status int, message string, data interface{}) error {
+func (u *Utils) WriteSuccessResponse(c echo.Context, status int, message string, data interface{}) error {
 	response := &JSONResponse{
 		Data:    data,
 		Message: message,
@@ -44,7 +42,7 @@ func (app *Config) WriteSuccessResponse(c echo.Context, status int, message stri
 	return c.JSON(status, response)
 }
 
-func (app *Config) GenerateJWTToken(userID string) (string, error) {
+func (u *Utils) GenerateJWTToken(userID string) (string, error) {
 	// Create a new JWT token
 	token := jwt.New(jwt.SigningMethodHS256)
 
@@ -65,7 +63,8 @@ func (app *Config) GenerateJWTToken(userID string) (string, error) {
 	return t, nil
 }
 
-func (app *Config) ValidateJWTToken(tokenString string) (string, error) {
+func (u *Utils) ValidateJWTToken(tokenString string) (string, error) {
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Ensure the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -74,9 +73,21 @@ func (app *Config) ValidateJWTToken(tokenString string) (string, error) {
 		return []byte("secret"), nil
 	})
 
-	if err != nil || !token.Valid {
+	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				// Token is expired
+				return "", nil
+			}
+		}
+		return "", nil
+	}
+
+	if !token.Valid {
 		return "", errors.New("Invalid token")
 	}
+
+	// Check if token has expired
 
 	// Set the userID in the context
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -90,13 +101,38 @@ func (app *Config) ValidateJWTToken(tokenString string) (string, error) {
 		return "", errors.New("Failed to validate token")
 	}
 
-	// remove expired tokens from the database
-	exp := int64(claims["exp"].(float64))
-	if exp < time.Now().Unix() {
-		// Token is expired, delete it
-		app.DB.Where("token = ?", tokenString).Delete(&models.PersonalToken{})
-		fmt.Println("token has expired")
-	}
+	// Check if the token has been revoked
+	// if err := u.checkTokenRevocation(tokenString); err != nil {
+	// 	return "", err
+	// }
 
 	return userID, nil
+
 }
+
+// func (u *Utils) deleteExpiredToken(tokenString string) {
+// 	if u.DB != nil {
+// 		u.DB.Where("token = ?", tokenString).Delete(&models.PersonalToken{})
+// 	}
+// }
+
+// func (u *Utils) checkTokenRevocation(tokenString string) error {
+// 	if u.DB == nil {
+// 		return errors.New("DB instance is not initialized")
+// 	}
+
+// 	var token models.PersonalToken
+// 	result := u.DB.Where("token = ? AND revoked = ?", tokenString, true).First(&token)
+// 	if result.Error != nil {
+// 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+// 			return nil
+// 		}
+// 		return result.Error
+// 	}
+
+// 	if token.Revoked {
+// 		return errors.New("Token has been revoked")
+// 	}
+
+// 	return nil
+// }

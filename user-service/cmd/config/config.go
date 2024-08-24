@@ -13,13 +13,13 @@ import (
 )
 
 type Config struct {
-	Database *gorm.DB
-	Models   models.Models
+	DB     *gorm.DB
+	Models models.Models
 }
 
 var counts int64
 
-func (c *Config) InitDB() *gorm.DB {
+func (app *Config) InitDB() *gorm.DB {
 
 	for {
 		db, err := connectToPostgres()

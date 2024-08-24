@@ -6,6 +6,7 @@ import (
 	"user-service/cmd/api/interceptor"
 	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
+	"user-service/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,8 +14,10 @@ import (
 )
 
 func main() {
+	// Initilize app wide dependencies
 	app := &config.Config{}
 	db := app.InitDB()
+	util := &utils.Utils{DB: db}
 
 	if db == nil {
 		log.Fatalf("Could not connect to the database.")
@@ -22,14 +25,13 @@ func main() {
 	}
 
 	// Create new handler instance with the db instance
-	h := handler.NewHandler(db)
+	h := handler.NewHandler(db, util)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// Middleware
-	e.Use(interceptor.JWTAuthentication)
 
+	// Add DB to echo context
 	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -42,10 +44,13 @@ func main() {
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
-	e.GET("/tokens", h.GetUserTokens)
-
 	// Docs Routes
 	e.GET("/docs/*", echoSwagger.WrapHandler)
+
+	authGroup := e.Group("profile")
+	// Middleware
+	authGroup.Use(interceptor.JWTAuthentication)
+	authGroup.GET("/tokens", h.GetUserTokens)
 
 	// Serve docs directly
 	// e.GET("/docs/swagger.json", func(c echo.Context) error {
