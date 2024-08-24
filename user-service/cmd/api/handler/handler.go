@@ -67,8 +67,18 @@ func (h *Handler) Register(c echo.Context) error {
 		return c.JSON(errResponsePayload.Status, errResponsePayload)
 	}
 
+	type UserJsonResponse struct {
+		ID    string `json:"id"`
+		Email string `json:"email"`
+	}
+
+	userJsonResponse := &UserJsonResponse{
+		ID:    u.ID,
+		Email: u.Email,
+	}
+
 	responsePayload := &JsonResponse{
-		Data:    u,
+		Data:    userJsonResponse,
 		Message: "User created successfully",
 		Status:  http.StatusCreated,
 	}
