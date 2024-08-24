@@ -6,9 +6,8 @@ import (
 	"user-service/config"
 
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
-
-//
 
 // create a response struct to add the response data, status, message,headers etc
 type JsonResponse struct {
@@ -33,6 +32,9 @@ func main() {
 
 		return c.JSON(response.Status, response)
 	})
+
+	// Routes
+	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
