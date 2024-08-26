@@ -23,16 +23,3 @@ jobs:
 
       - name: Test
         run: cd ./user-service/cmd/api/handler && go test -v
-
-      - name: Install Heroku CLI
-        run: curl https://cli-assets.heroku.com/install.sh | sh
-      
-      - name : Login to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku auth:token
-
-      - name: Deploy to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku git:remote -a optimate-user-service-dev && git push heroku develop:main

@@ -2,4 +2,4 @@ build:
   docker:
     web: Dockerfile
 run:
-  web: bin/user-service
+  web: ./user-service/bin/userService
