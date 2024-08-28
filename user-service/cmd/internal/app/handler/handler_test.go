@@ -8,10 +8,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
-	"user-service/models"
-	"user-service/utils"
+	"user-service/cmd/internal/app/repositories"
+	"user-service/cmd/internal/app/service"
+	"user-service/cmd/internal/models"
+	"user-service/cmd/internal/utils"
+	"user-service/cmd/internal/validators"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +22,7 @@ import (
 )
 
 // Set up Echo and database for testing
-func setUpTest() (*echo.Echo, *gorm.DB) {
+func setUpTest() (*echo.Echo, *gorm.DB, *service.UserService) {
 	e := echo.New()
 	e.Validator = &validators.CustomValidator{}
 	// use an in-memory SQLite database for testing
@@ -30,14 +32,17 @@ func setUpTest() (*echo.Echo, *gorm.DB) {
 	err := db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 	if err != nil {
 		fmt.Println("Error migrating the schema")
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	return e, db
+	repo := repositories.NewUserRepository(db) // Create a new instance of UserRepository
+	service := service.NewUserService(repo)
+
+	return e, db, service
 }
 
 func TestIndexSuccess(t *testing.T) {
-	e, db := setUpTest()
+	e, db, service := setUpTest()
 
 	config := &config.Config{
 		DB: db,
@@ -68,7 +73,7 @@ func TestIndexSuccess(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	// Execute the handler
 	if assert.NoError(t, h.Index(c)) {
@@ -79,7 +84,7 @@ func TestIndexSuccess(t *testing.T) {
 }
 
 func RegisterSuccessTest(t *testing.T) {
-	e, db := setUpTest()
+	e, db, service := setUpTest()
 
 	config := &config.Config{
 		DB: db,
@@ -87,8 +92,11 @@ func RegisterSuccessTest(t *testing.T) {
 
 	// Create a new Http Request
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
-		"email": "test@doe.com"
-		"password": "password"
+		"email": "admin@admin.com",
+		"password": "password",
+		"firstname": "John",
+		"lastname": "Doe"
+
 	}`))
 
 	// set header to application/json
@@ -116,7 +124,7 @@ func RegisterSuccessTest(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	// Execute the handler
 	if assert.NoError(t, h.Register(c)) {
@@ -127,7 +135,7 @@ func RegisterSuccessTest(t *testing.T) {
 }
 
 func TestRegisterInvaidData(t *testing.T) {
-	e, db := setUpTest()
+	e, db, service := setUpTest()
 
 	config := &config.Config{
 		DB: db,
@@ -147,29 +155,39 @@ func TestRegisterInvaidData(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.Contains(t, rec.Body.String(), "Email is required;Password is required")
+		assert.Contains(t, rec.Body.String(), "Email is required;Firstname is required;Lastname is required;Password is required")
 	}
 
 }
 
 func TestRegisterWithExistingEmail(t *testing.T) {
-	e, db := setUpTest()
-
+	e, db, service := setUpTest()
 	config := &config.Config{
 		DB: db,
 	}
 
-	u := &models.User{}
-	err := u.CreateUser(db, "admin@admin.com", "password")
-	assert.NoError(t, err)
+	_, err := service.RegisterUser(
+		&models.RegisterInput{
+			Email:     "admin@admin.com",
+			Password:  "password",
+			Firstname: "John",
+			LastName:  "Doe",
+		},
+	)
+
+	if err != nil {
+		t.Fatalf("Failed to register user: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
 		"email": "admin@admin.com",
-		"password": "password"
+		"password": "password",
+		"firstname": "John",
+		"lastname": "Doe"
 	}`))
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -181,24 +199,32 @@ func TestRegisterWithExistingEmail(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	if assert.NoError(t, h.Register(c)) {
-		assert.Equal(t, http.StatusConflict, rec.Code)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.Contains(t, rec.Body.String(), "Email already exists")
 	}
 }
 
 func TestLoginSuccess(t *testing.T) {
-	e, db := setUpTest()
+	e, db, service := setUpTest()
 
 	config := &config.Config{
 		DB: db,
 	}
 
-	u := &models.User{}
-	err := u.CreateUser(db, "admin@admin.com", "password")
-	assert.NoError(t, err)
+	_, err := service.RegisterUser(
+		&models.RegisterInput{
+			Email:     "admin@admin.com",
+			Password:  "password",
+			Firstname: "John",
+			LastName:  "Doe",
+		},
+	)
+	if err != nil {
+		t.Fatalf("Failed to register user: %v", err)
+	}
 
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{
 		"email": "admin@admin.com",
@@ -214,7 +240,7 @@ func TestLoginSuccess(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -230,7 +256,7 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginInvalidData(t *testing.T) {
-	e, db := setUpTest()
+	e, db, service := setUpTest()
 
 	config := &config.Config{
 		DB: db,
@@ -250,7 +276,7 @@ func TestLoginInvalidData(t *testing.T) {
 	utils := &utils.Utils{
 		DB: db,
 	}
-	h := NewHandler(db, utils)
+	h := NewHandler(db, utils, service)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

@@ -48,6 +48,7 @@ func (u *Utils) GenerateJWTToken(userID string) (string, error) {
 
 	// Set claims
 	claims, ok := token.Claims.(jwt.MapClaims)
+
 	if !ok {
 		return "", errors.New("Invalid token")
 	}

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
-	"user-service/cmd/api/handler"
-	"user-service/cmd/api/interceptor"
-	"user-service/cmd/api/validators"
 	"user-service/cmd/config"
-	"user-service/utils"
+	"user-service/cmd/internal/app/handler"
+	"user-service/cmd/internal/app/repositories"
+	"user-service/cmd/internal/app/service"
+	"user-service/cmd/internal/interceptor"
+	"user-service/cmd/internal/utils"
+	"user-service/cmd/internal/validators"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,14 +19,13 @@ func main() {
 	app := &config.Config{}
 	db := app.InitDB()
 	util := &utils.Utils{DB: db}
-
-	if db == nil {
-		log.Fatalf("Could not connect to the database.")
-		return
-	}
+	repo := repositories.NewUserRepository(db)
+	jwtRepo := repositories.NewJWTToken(db)
+	userService := service.NewUserService(repo)
+	jwtService := service.NewJWTService(jwtRepo, "secret")
 
 	// Create new handler instance with the db instance
-	h := handler.NewHandler(db, util)
+	h := handler.NewHandler(db, util, userService)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -49,7 +49,7 @@ func main() {
 
 	authGroup := e.Group("profile")
 	// Middleware
-	authGroup.Use(interceptor.JWTAuthentication)
+	authGroup.Use(interceptor.JWTAuthentication(jwtService))
 	authGroup.GET("/tokens", h.GetUserTokens)
 
 	// Serve docs directly
