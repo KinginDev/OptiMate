@@ -1,3 +1,4 @@
+// Package service
 package service
 
 import (
@@ -42,7 +43,7 @@ func (s *UserService) AuthenticateUser(email, password string) (*models.User, er
 	}
 
 	if !user.ComparePassword(password) {
-		return nil, errors.New("Invalid Credentials")
+		return nil, errors.New("invalid credentials")
 	}
 	return user, nil
 }

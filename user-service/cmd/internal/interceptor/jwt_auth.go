@@ -10,7 +10,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// JWTAuthentication Middleware function to handle JWT authentication
+// JWTAuthentication godoc
+// @Summary JWT Authentication middleware
+// @Description JWT Authentication middleware
+// @Param Authorization header string true "
+// @Tags JWT
+// @Accept json
+// @Produce json
+// @Success 200 {object} string "success"
+// @Failure 401 {object} string "Unauthorized"
+// JWTAuthentication is a middleware function that validates the JWT token
+// and sets the user ID in the echo context
 func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -36,7 +46,9 @@ func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 			}
 
 			userID, ok := claims["user_id"]
-
+			if !ok {
+				return echo.NewHTTPError(http.StatusInternalServerError, "User ID not found in token claims")
+			}
 			c.Set("userID", userID)
 
 			return next(c)

@@ -13,9 +13,8 @@ type Models struct {
 }
 
 type User struct {
-	ID    string `json:"id" gorm:"type=UUID;primary_key"`
-	Email string `json:"email" gorm:"unique;not null" valid:"required~Email is required,email~Email must be a valid email address"`
-	//Add pointers to nullable fields
+	ID        string          `json:"id" gorm:"type=UUID;primary_key"`
+	Email     string          `json:"email" gorm:"unique;not null" valid:"required~Email is required,email~Email must be a valid email address"`
 	Firstname *string         `json:"firstname" gorm:"type:varchar(255)" valid:""`
 	Lastname  *string         `json:"lastname" gorm:"type:varchar(255)" valid:""`
 	Password  string          `json:"password" gorm:"type:varchar(255);not null" valid:"required~Password is required,minstringlength(8)~Password must be at least 8 characters long"`
