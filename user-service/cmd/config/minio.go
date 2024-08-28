@@ -16,16 +16,15 @@ type MinioConfig struct {
 
 // Constructor
 
-func NewMinioClient(endpoint, accessKeyId, secretAccessKey string, useSSL bool) *minio.Client {
+func NewMinioClient(endpoint, accessKeyID, secretAccessKey string, useSSL bool) *minio.Client {
 	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyId, secretAccessKey, ""),
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
 		Secure: useSSL,
 	})
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Connected to Minio %v%", minioClient)
-
+	log.Printf("Connected to Minio")
 	return minioClient
 }
 
