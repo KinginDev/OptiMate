@@ -31,6 +31,19 @@ services:
     networks:
       - optimate_network
 
+  minio:
+    image: minio/minio
+    container_name: optimate_minio
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    ports:
+      - "9001:9000"
+    command: server /data
+    volumes:
+      - ./minio/data:/data
+    networks:
+      - optimate_network
 networks:
   optimate_network:
     driver: bridge

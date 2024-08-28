@@ -6,7 +6,6 @@ import (
 	"strings"
 	"user-service/cmd/internal/app/service"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 )
 
@@ -35,19 +34,32 @@ func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "Bearer token not found")
 			}
 
+			// Validate the token
 			token, err := jwtService.ValidateToken(tokenString)
 			if err != nil || !token.Valid {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate token")
 			}
 
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
+			// Check the claims for userID
+			userID, err := jwtService.GetUserIDFromToken(tokenString)
+			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Token claims are not accessible")
 			}
 
-			userID, ok := claims["user_id"]
-			if !ok {
-				return echo.NewHTTPError(http.StatusInternalServerError, "User ID not found in token claims")
+			// Check if token has been revoved
+			revoked, err := jwtService.CheckTokenRevocation(tokenString)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check token revocation")
+			}
+
+			if revoked {
+				return echo.NewHTTPError(http.StatusUnauthorized, "Token has been revoked")
+			}
+
+			// Attempt revoke token
+			err = jwtService.RevokeToken(tokenString)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to revoke token")
 			}
 			c.Set("userID", userID)
 

@@ -2,10 +2,7 @@
 package models
 
 import (
-	"fmt"
-
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type Models struct {
@@ -32,29 +29,8 @@ func (u *User) TableName() string {
 	return "users"
 }
 
-func (u *User) GetUserByEmail(db *gorm.DB, email string) (*User, error) {
-	user := &User{}
-	err := db.Where("email = ?", email).First(user).Error
-	return user, err
-}
-
-func (u *User) GetUserByID(db *gorm.DB, id string) (*User, error) {
-	user := &User{}
-	err := db.Where("id = ?", id).First(user).Error
-	return user, err
-}
-
-func GetTokensByUserID(db *gorm.DB, id string) ([]PersonalToken, error) {
-	var tokens []PersonalToken
-	if err := db.Where("user_id = ?", id).Find(&tokens).Error; err != nil {
-		return nil, err
-	}
-	return tokens, nil
-}
-
 func (u *User) ComparePassword(password string) bool {
 	// u.Password should be the hashed password retrieved from the database
-	fmt.Println(u.Password)
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
 }

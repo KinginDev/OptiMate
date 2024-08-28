@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"user-service/cmd/config"
 	"user-service/cmd/internal/app/repositories"
 	"user-service/cmd/internal/app/service"
 	"user-service/cmd/internal/models"
+	"user-service/cmd/internal/types"
 	"user-service/cmd/internal/utils"
 	"user-service/cmd/internal/validators"
 
@@ -22,7 +22,7 @@ import (
 )
 
 // Set up Echo and database for testing
-func setUpTest() (*echo.Echo, *gorm.DB, *service.UserService) {
+func setUpTest() (*echo.Echo, *types.AppContainer) {
 	e := echo.New()
 	e.Validator = &validators.CustomValidator{}
 	// use an in-memory SQLite database for testing
@@ -32,21 +32,23 @@ func setUpTest() (*echo.Echo, *gorm.DB, *service.UserService) {
 	err := db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 	if err != nil {
 		fmt.Println("Error migrating the schema")
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	repo := repositories.NewUserRepository(db) // Create a new instance of UserRepository
-	service := service.NewUserService(repo)
+	userRepo := repositories.NewUserRepository(db)      // Create a new instance of UserRepository
+	tokenRepo := repositories.NewJWTTokenRepository(db) // Create a new instance of UserRepository
 
-	return e, db, service
+	container := &types.AppContainer{
+		Utils:       utils.NewUtils(db),
+		DB:          db,
+		UserService: service.NewUserService(userRepo),
+		JWTService:  service.NewJWTService(tokenRepo, "secret"),
+	}
+	return e, container
 }
 
 func TestIndexSuccess(t *testing.T) {
-	e, db, service := setUpTest()
-
-	config := &config.Config{
-		DB: db,
-	}
+	e, container := setUpTest()
 
 	// Create a new Http Request
 	req := httptest.NewRequest(http.MethodPost, "/", nil)
@@ -58,22 +60,8 @@ func TestIndexSuccess(t *testing.T) {
 		 which allows you to inspect the response in your our tests.
 	**/
 	rec := httptest.NewRecorder()
-
-	/**
-		Create a new Echo Context.
-		Can be retrieved later using `c.Get("config")`.
-	**/
 	c := e.NewContext(req, rec)
-	/**
-		Sets a value in the Echo context.
-	**/
-	c.Set("config", config)
-
-	// Create a new handler instance
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	// Execute the handler
 	if assert.NoError(t, h.Index(c)) {
@@ -84,11 +72,7 @@ func TestIndexSuccess(t *testing.T) {
 }
 
 func RegisterSuccessTest(t *testing.T) {
-	e, db, service := setUpTest()
-
-	config := &config.Config{
-		DB: db,
-	}
+	e, container := setUpTest()
 
 	// Create a new Http Request
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
@@ -110,21 +94,9 @@ func RegisterSuccessTest(t *testing.T) {
 	**/
 	rec := httptest.NewRecorder()
 
-	/**
-		Create a new Echo Context.
-		Can be retrieved later using `c.Get("config")`.
-	**/
 	c := e.NewContext(req, rec)
-	/**
-		Sets a value in the Echo context.
-	**/
-	c.Set("config", config)
 
-	// Create a new handler instance
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	// Execute the handler
 	if assert.NoError(t, h.Register(c)) {
@@ -135,11 +107,7 @@ func RegisterSuccessTest(t *testing.T) {
 }
 
 func TestRegisterInvaidData(t *testing.T) {
-	e, db, service := setUpTest()
-
-	config := &config.Config{
-		DB: db,
-	}
+	e, container := setUpTest()
 
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(`{
 		"email": "",
@@ -150,12 +118,7 @@ func TestRegisterInvaidData(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("config", config)
-
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -165,12 +128,9 @@ func TestRegisterInvaidData(t *testing.T) {
 }
 
 func TestRegisterWithExistingEmail(t *testing.T) {
-	e, db, service := setUpTest()
-	config := &config.Config{
-		DB: db,
-	}
+	e, container := setUpTest()
 
-	_, err := service.RegisterUser(
+	_, err := container.UserService.RegisterUser(
 		&models.RegisterInput{
 			Email:     "admin@admin.com",
 			Password:  "password",
@@ -194,12 +154,8 @@ func TestRegisterWithExistingEmail(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("config", config)
 
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	if assert.NoError(t, h.Register(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -208,13 +164,9 @@ func TestRegisterWithExistingEmail(t *testing.T) {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	e, db, service := setUpTest()
+	e, container := setUpTest()
 
-	config := &config.Config{
-		DB: db,
-	}
-
-	_, err := service.RegisterUser(
+	_, err := container.UserService.RegisterUser(
 		&models.RegisterInput{
 			Email:     "admin@admin.com",
 			Password:  "password",
@@ -235,12 +187,8 @@ func TestLoginSuccess(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("config", config)
 
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -256,11 +204,7 @@ func TestLoginSuccess(t *testing.T) {
 }
 
 func TestLoginInvalidData(t *testing.T) {
-	e, db, service := setUpTest()
-
-	config := &config.Config{
-		DB: db,
-	}
+	e, container := setUpTest()
 
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{
 		"email": "",
@@ -271,12 +215,8 @@ func TestLoginInvalidData(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("config", config)
 
-	utils := &utils.Utils{
-		DB: db,
-	}
-	h := NewHandler(db, utils, service)
+	h := NewHandler(container)
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

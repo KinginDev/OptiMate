@@ -6,6 +6,7 @@ import (
 	"user-service/cmd/internal/app/repositories"
 	"user-service/cmd/internal/app/service"
 	"user-service/cmd/internal/interceptor"
+	"user-service/cmd/internal/types"
 	"user-service/cmd/internal/utils"
 	"user-service/cmd/internal/validators"
 
@@ -15,17 +16,26 @@ import (
 )
 
 func main() {
-	// Initilize app wide dependencies
-	app := &config.Config{}
+	// Initilize
+	app := config.NewConfig()
 	db := app.InitDB()
-	util := &utils.Utils{DB: db}
+
+	// Set up the repositories and services
 	repo := repositories.NewUserRepository(db)
-	jwtRepo := repositories.NewJWTToken(db)
+	jwtRepo := repositories.NewJWTTokenRepository(db)
 	userService := service.NewUserService(repo)
 	jwtService := service.NewJWTService(jwtRepo, "secret")
 
+	// Create a new container
+	container := &types.AppContainer{
+		Utils:       utils.NewUtils(db),
+		DB:          db,
+		UserService: userService,
+		JWTService:  jwtService,
+	}
+
 	// Create new handler instance with the db instance
-	h := handler.NewHandler(db, util, userService)
+	h := handler.NewHandler(container)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -50,7 +60,7 @@ func main() {
 	authGroup := e.Group("profile")
 	// Middleware
 	authGroup.Use(interceptor.JWTAuthentication(jwtService))
-	authGroup.GET("/tokens", h.GetUserTokens)
+	authGroup.GET("/tokens", h.GetUserJWTTokens)
 
 	// Serve docs directly
 	// e.GET("/docs/swagger.json", func(c echo.Context) error {

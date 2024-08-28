@@ -19,6 +19,10 @@ type Config struct {
 
 var counts int64
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (app *Config) InitDB() *gorm.DB {
 
 	for {

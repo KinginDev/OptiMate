@@ -4,20 +4,16 @@ package handler
 import (
 	"net/http"
 	"time"
-	"user-service/cmd/internal/app/service"
 	"user-service/cmd/internal/models"
-	"user-service/cmd/internal/utils"
+	"user-service/cmd/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 // Handler struct to hold the db instance
 type Handler struct {
-	DB      *gorm.DB
-	Utils   *utils.Utils
-	Service *service.UserService
+	Container *types.AppContainer
 }
 
 type UserJSONResponse struct {
@@ -26,11 +22,9 @@ type UserJSONResponse struct {
 }
 
 // NewHandler function to initialize the handler with the given DB instance
-func NewHandler(db *gorm.DB, utils *utils.Utils, s *service.UserService) *Handler {
+func NewHandler(container *types.AppContainer) *Handler {
 	return &Handler{
-		DB:      db,
-		Utils:   utils,
-		Service: s,
+		Container: container,
 	}
 }
 
@@ -72,27 +66,45 @@ func (h *Handler) Register(c echo.Context) error {
 		JSON request body to the corresponding struct
 	**/
 	if err := c.Bind(&input); err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	// validate input fields
 	if err := c.Validate(&input); err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
-	existingUser, err := h.Service.Repo.GetUserByEmail(input.Email)
+	existingUser, err := h.Container.UserService.Repo.GetUserByEmail(input.Email)
 
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	if existingUser != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Email already exists")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Email already exists")
 	}
 
-	user, err := h.Service.RegisterUser(&input)
+	user, err := h.Container.UserService.RegisterUser(&input)
 
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	// Generate new JWT token for user
+	t, err := h.Container.JWTService.GenerateJWTToken(user.ID)
+	if err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+	}
+
+	personalToken := &models.PersonalToken{
+		ID:        uuid.New().String(),
+		UserID:    user.ID,
+		Token:     t,
+		CreatedAt: time.Now().String(),
+		UpdatedAt: time.Now().String(),
+	}
+
+	if err := h.Container.JWTService.StoreToken(personalToken); err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
 	UserJSONResponse := &UserJSONResponse{
@@ -100,7 +112,7 @@ func (h *Handler) Register(c echo.Context) error {
 		Email: user.Email,
 	}
 
-	return h.Utils.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
 
 }
 
@@ -116,23 +128,23 @@ func (h *Handler) Register(c echo.Context) error {
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
 
 	// validate input fields
 	if err := c.Validate(u); err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.Service.AuthenticateUser(u.Email, u.Password)
+	user, err := h.Container.UserService.AuthenticateUser(u.Email, u.Password)
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid Credentials")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusUnauthorized, "Invalid Credentials")
 	}
 
 	// Generate new JWT token for user
-	t, err := h.Utils.GenerateJWTToken(user.ID)
+	t, err := h.Container.JWTService.GenerateJWTToken(user.ID)
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
 	personalToken := &models.PersonalToken{
@@ -143,11 +155,11 @@ func (h *Handler) Login(c echo.Context) error {
 		UpdatedAt: time.Now().String(),
 	}
 
-	if err := h.DB.Create(personalToken).Error; err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
+	if err := h.Container.JWTService.StoreToken(personalToken); err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to create token")
 	}
 
-	return h.Utils.WriteSuccessResponse(c, http.StatusOK, "Login successful", map[string]string{
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Login successful", map[string]string{
 		"email": user.Email,
 		"token": t,
 	})
@@ -163,23 +175,23 @@ func (h *Handler) Login(c echo.Context) error {
 // @Faliure 400 (object) JSONResponse "User not found"
 // @Faliure 404 (object) JSONResponse "User not found"
 // @Faliure 500 (object) JSONResponse "Failed to fetch tokens"
-func (h *Handler) GetUserTokens(c echo.Context) error {
+func (h *Handler) GetUserJWTTokens(c echo.Context) error {
+
+	// Get the user id from the middleware
 	userID, ok := c.Get("userID").(string)
 
 	if !ok {
-		return h.Utils.WriteErrorResponse(c, http.StatusBadRequest, "User not found")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "User not found")
 	}
 
-	var u models.User
-
-	user, err := u.GetUserByID(h.DB, userID)
+	user, err := h.Container.UserService.Repo.GetUserByID(h.Container.DB, userID)
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
 	}
 
-	tokens, err := models.GetTokensByUserID(h.DB, user.ID)
+	tokens, err := h.Container.UserService.GetUserTokens(user.ID)
 	if err != nil {
-		return h.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to fetch tokens")
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to fetch tokens")
 	}
 
 	response := map[string]interface{}{
@@ -190,5 +202,5 @@ func (h *Handler) GetUserTokens(c echo.Context) error {
 		"tokens": tokens[len(tokens)-1],
 	}
 
-	return h.Utils.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
 }
