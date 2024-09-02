@@ -21,9 +21,9 @@ func main() {
 	db := app.InitDB()
 
 	// Set up the repositories and services
-	repo := repositories.NewUserRepository(db)
+	userRepo := repositories.NewUserRepository(db)
 	jwtRepo := repositories.NewJWTTokenRepository(db)
-	userService := service.NewUserService(repo)
+	userService := service.NewUserService(userRepo)
 	jwtService := service.NewJWTService(jwtRepo, "secret")
 
 	// Create a new container

@@ -61,6 +61,7 @@ func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to revoke token")
 			}
+
 			c.Set("userID", userID)
 
 			return next(c)

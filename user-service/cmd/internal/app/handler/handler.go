@@ -73,6 +73,7 @@ func (h *Handler) Register(c echo.Context) error {
 	if err := c.Validate(&input); err != nil {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
+
 	existingUser, err := h.Container.UserService.Repo.GetUserByEmail(input.Email)
 
 	if err != nil {

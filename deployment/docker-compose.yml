@@ -38,7 +38,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     ports:
-      - "9001:9000"
+      - "9700:9000"
     command: server /data
     volumes:
       - ./minio/data:/data
