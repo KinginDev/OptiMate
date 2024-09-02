@@ -2,8 +2,8 @@
 package config
 
 import (
-	"fmt"
 	"log"
+	"optimizer-service/cmd/internal/models"
 	"os"
 	"time"
 
@@ -23,14 +23,16 @@ var counts int64
 
 func (app *Config) InitDB() *gorm.DB {
 	for {
-		db, err := connectToPosgress()
+		db, err := connectToPostgress()
 		if err != nil {
-			fmt.Println("Error connecting to database, retrying")
+			log.Println("Error connecting to database, retrying")
+			time.Sleep(5 * time.Second)
+			counts++
 		} else {
 			log.Printf("Connected to database")
-			// err = db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+			err = db.AutoMigrate(&models.File{}, &models.OptimizationSettings{})
 			if err != nil {
-				fmt.Println("Error migrating the schema")
+				log.Println("Error migrating the schema")
 				return nil
 			}
 			return db
@@ -47,12 +49,12 @@ func (app *Config) InitDB() *gorm.DB {
 	}
 }
 
-func connectToPosgress() (*gorm.DB, error) {
+func connectToPostgress() (*gorm.DB, error) {
 	DSN := os.Getenv("DSN")
-	fmt.Printf("DSN %v\n%", DSN)
+	log.Printf("DSN %v\n", DSN)
 	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
 	if err != nil {
-		fmt.Printf("Failed to connect to database %v", err)
+		log.Printf("Failed to connect to database %v", err)
 		return nil, err
 	}
 	return db, nil

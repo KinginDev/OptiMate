@@ -2,6 +2,8 @@
 package utils
 
 import (
+	"log"
+
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -31,6 +33,7 @@ func (u *Utils) WriteErrorResponse(c echo.Context, status int, message string) e
 		Success: false,
 		Status:  status,
 	}
+	log.Println(response)
 	return c.JSON(status, response)
 }
 
@@ -41,5 +44,6 @@ func (u *Utils) WriteSuccessResponse(c echo.Context, status int, message string,
 		Success: true,
 		Status:  status,
 	}
+	log.Println(response)
 	return c.JSON(status, response)
 }

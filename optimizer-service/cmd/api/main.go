@@ -4,25 +4,42 @@ package main
 import (
 	"optimizer-service/cmd/config"
 	"optimizer-service/cmd/internal/app/handler"
+	"optimizer-service/cmd/internal/app/repositories"
+	"optimizer-service/cmd/internal/app/service"
 	"optimizer-service/cmd/internal/types"
 	"optimizer-service/cmd/internal/utils"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
-	//Init database
+	// Init database
 	app := config.NewConfig()
 	db := app.InitDB()
 
-	//Init App Container
-	container := &types.AppContainer{
-		DB:    db,
-		Utils: utils.NewUtils(db),
+	// Setup Repositories
+	fileRepo := repositories.NewFileRepository(db)
+
+	// Setup Services
+	storagePath := "./storage/uploads"
+
+	//if the dir has not been created create it
+	if _, err := os.Stat(storagePath); err != nil {
+		os.MkdirAll(storagePath, os.ModePerm)
 	}
 
-	//Start a new handle
+	fileService := service.NewFileService(fileRepo, storagePath)
+
+	// Init App Container
+	container := &types.AppContainer{
+		DB:          db,
+		Utils:       utils.NewUtils(db),
+		FileService: fileService,
+	}
+
+	// Start a new handle
 	h := handler.NewHandler(container)
 
 	//Set up echo
@@ -36,6 +53,8 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
-	e.GET("/", h.Index)
-	e.Logger.Fatal(e.Start(":8021"))
+	e.GET("/", h.HomePage)
+	e.POST("/upload", h.PostUploadFile)
+
+	e.Logger.Fatal(e.Start(":8080"))
 }
