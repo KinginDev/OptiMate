@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"time"
-	"user-service/cmd/internal/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,23 +15,20 @@ type Config struct {
 	DB *gorm.DB
 }
 
-var counts int64
-
 func NewConfig() *Config {
 	return &Config{}
 }
 
-func (app *Config) InitDB() *gorm.DB {
+var counts int64
 
+func (app *Config) InitDB() *gorm.DB {
 	for {
-		db, err := connectToPostgres()
+		db, err := connectToPosgress()
 		if err != nil {
-			fmt.Println("Error connecting to database, retrying in 5 seconds")
-			time.Sleep(5 * time.Second)
-			counts++
+			fmt.Println("Error connecting to database, retrying")
 		} else {
 			log.Printf("Connected to database")
-			err = db.AutoMigrate(&models.User{}, &models.PersonalToken{})
+			// err = db.AutoMigrate(&models.User{}, &models.PersonalToken{})
 			if err != nil {
 				fmt.Println("Error migrating the schema")
 				return nil
@@ -49,15 +45,14 @@ func (app *Config) InitDB() *gorm.DB {
 		time.Sleep(2 * time.Second)
 		continue
 	}
-
 }
 
-func connectToPostgres() (*gorm.DB, error) {
+func connectToPosgress() (*gorm.DB, error) {
 	DSN := os.Getenv("DSN")
-	fmt.Printf("DSN: %v\n", DSN)
+	fmt.Printf("DSN %v\n%", DSN)
 	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
 	if err != nil {
-		fmt.Printf("failed to connect database %v", err)
+		fmt.Printf("Failed to connect to database %v", err)
 		return nil, err
 	}
 	return db, nil
