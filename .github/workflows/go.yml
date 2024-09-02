@@ -22,5 +22,5 @@ jobs:
         run: cd ./user-service && go build -v cmd/api/main.go
 
       - name: Test
-        run: cd ./user-service/cmd/api/handler && go test -v
+        run: cd ./user-service/cmd/internal/app/handler && go test -v
     
