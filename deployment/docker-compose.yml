@@ -27,10 +27,23 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "54331:5432"
     networks:
       - optimate_network
 
+  minio:
+    image: minio/minio
+    container_name: optimate_minio
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    ports:
+      - "9700:9000"
+    command: server /data
+    volumes:
+      - ./minio/data:/data
+    networks:
+      - optimate_network
 networks:
   optimate_network:
     driver: bridge
