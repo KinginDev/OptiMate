@@ -14,6 +14,19 @@ services:
     environment:
       DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
 
+  optimizer-service:
+    build:
+      context: ./../optimizer-service
+      dockerfile: Dockerfile.optimizerService
+    restart: always
+    ports:
+      - "8021:8080"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
+
   db:
     image: postgres:14
     container_name: optimate_db
