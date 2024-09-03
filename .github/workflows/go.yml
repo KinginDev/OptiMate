@@ -29,4 +29,26 @@ jobs:
 
       - name: Test Optimizer Service
         run: cd ./optimizer-service/cmd/internal/app/handler && go test -v
-        
+         # Docker Login to Heroku
+      - name: Heroku Container Login
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:login
+
+      # Build and Push User Service Docker Image
+      - name: Build and Push User Service Docker Image
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          cd ./user-service
+          heroku container:push web --app optimate-user-service-dev
+          heroku container:release web --app optimate-user-service-dev
+
+      # Build and Push Optimizer Service Docker Image
+      - name: Build and Push Optimizer Service Docker Image
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          cd ./optimizer-service
+          heroku container:push web --app optimate-optimizer-service-dev
+          heroku container:release web --app optimate-optimizer-service-dev
