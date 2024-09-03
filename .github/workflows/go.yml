@@ -13,22 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.22.3"
-
-      - name: Build User Service  
-        run: cd ./user-service && go build -v cmd/api/main.go
-
-      - name: Test User Service
-        run: cd ./user-service/cmd/internal/app/handler && go test -v
-
-      - name: Build Optimizer Service
-        run: cd ./optimizer-service && go build -v cmd/api/main.go
-
-      - name: Test Optimizer Service
-        run: cd ./optimizer-service/cmd/internal/app/handler && go test -v
          # Docker Login to Heroku
       - name: Heroku Container Login
         env:
