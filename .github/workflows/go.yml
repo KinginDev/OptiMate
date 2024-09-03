@@ -7,19 +7,33 @@ on:
     branches: [develop]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22.3"
+      - name: Build User Service
+        run: cd ./user-service && go build -v cmd/api/main.go
+      - name: Test User Service
+        run: cd ./user-service/cmd/api/handler && go test -v
+      - name: Build Optimizer Service
+        run: cd ./optimizer-service && go build -v cmd/api/main.go
+      - name: Test Optimizer Service
+        run: cd ./optimizer-service/cmd/internal/app/handler && go test -v
 
-         # Docker Login to Heroku
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
       - name: Heroku Container Login
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:login
-
-      # Build and Push User Service Docker Image
       - name: Build and Push User Service Docker Image
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -27,8 +41,6 @@ jobs:
           cd ./user-service
           heroku container:push web -a optimate-user-service-dev
           heroku container:release web -a optimate-user-service-dev
-
-      # Build and Push Optimizer Service Docker Image
       - name: Build and Push Optimizer Service Docker Image
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
