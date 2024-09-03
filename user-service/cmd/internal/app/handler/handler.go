@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"time"
 	"user-service/cmd/internal/models"
@@ -77,7 +78,7 @@ func (h *Handler) Register(c echo.Context) error {
 	existingUser, err := h.Container.UserService.Repo.GetUserByEmail(input.Email)
 
 	if err != nil {
-		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+		log.Println(err)
 	}
 
 	if existingUser != nil {
