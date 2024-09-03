@@ -53,9 +53,9 @@ func (app *Config) InitDB() *gorm.DB {
 }
 
 func connectToPostgres() (*gorm.DB, error) {
-	DSN := os.Getenv("DSN")
-	fmt.Printf("DSN: %v\n", DSN)
-	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
+	databaseUrl := os.Getenv("DATABASE_URL")
+	fmt.Printf("DATABASE_URL: %v\n", databaseUrl)
+	db, err := gorm.Open(postgres.Open(databaseUrl), &gorm.Config{})
 	if err != nil {
 		fmt.Printf("failed to connect database %v", err)
 		return nil, err
