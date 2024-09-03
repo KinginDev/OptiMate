@@ -62,7 +62,6 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
     ports:
       - "9700:9000"
       - "9007:9001"

@@ -74,18 +74,27 @@ func setUpStorage() storage.Storage {
 	case "local":
 		//setup local
 		basePath := "./storage/uploads"
-		//if the dir has not been created create it
-		if _, err := os.Stat(basePath); err != nil {
-			os.MkdirAll(basePath, os.ModePerm)
-		}
 
+		//if the dir has not been created create it
+		_, err := os.Stat(basePath)
+
+		if os.IsNotExist(err) {
+			errDir := os.MkdirAll(basePath, 0755)
+			if errDir != nil {
+				log.Printf("Error creating directory %v", errDir)
+			}
+		} else if err != nil {
+			// If os.Stat returned an error other than ErrNotExist, handle it
+			log.Printf("Error checking directory %v", err)
+		}
 		return storage.NewLocalStorage(basePath)
 	case "minio":
 		//setup minio
+		m := &MinioConfig{}
 		endpoint := os.Getenv("MINIO_ENDPOINT")
 		rootUser := os.Getenv("MINIO_ROOT_USER")
 		rootPassword := os.Getenv("MINIO_ROOT_PASSWORD")
-		useSSL := false // Configurable based on your setup
+		useSSL := m.GetUseSSL() // Configurable based on your setup
 
 		c := NewMinioClient(
 			endpoint,
@@ -97,7 +106,7 @@ func setUpStorage() storage.Storage {
 		bucketName := "optimate"
 		return storage.NewMinIOStorage(c, bucketName)
 	default:
-		log.Fatal("Unsupported Storage Type")
+		log.Println("Unsupported Storage Type")
 	}
 
 	return nil
