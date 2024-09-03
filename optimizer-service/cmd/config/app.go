@@ -4,6 +4,7 @@ package config
 import (
 	"log"
 	"optimizer-service/cmd/internal/models"
+	"optimizer-service/cmd/internal/storage"
 	"os"
 	"time"
 
@@ -12,7 +13,8 @@ import (
 )
 
 type Config struct {
-	DB *gorm.DB
+	DB      *gorm.DB
+	Storage storage.Storage
 }
 
 func NewConfig() *Config {
@@ -48,6 +50,10 @@ func (app *Config) InitDB() *gorm.DB {
 		continue
 	}
 }
+func (app *Config) InitStorage() storage.Storage {
+	app.Storage = setUpStorage()
+	return app.Storage
+}
 
 func connectToPostgress() (*gorm.DB, error) {
 	DSN := os.Getenv("DSN")
@@ -58,4 +64,41 @@ func connectToPostgress() (*gorm.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// Setup Storage
+func setUpStorage() storage.Storage {
+	//Get disk from env
+	disk := os.Getenv("DISK")
+	switch disk {
+	case "local":
+		//setup local
+		basePath := "./storage/uploads"
+		//if the dir has not been created create it
+		if _, err := os.Stat(basePath); err != nil {
+			os.MkdirAll(basePath, os.ModePerm)
+		}
+
+		return storage.NewLocalStorage(basePath)
+	case "minio":
+		//setup minio
+		endpoint := os.Getenv("MINIO_ENDPOINT")
+		accessKeyID := os.Getenv("MINIO_ACCESS_KEY")
+		secretAccessKey := os.Getenv("MINIO_SECRET_KEY")
+		useSSL := false // Configurable based on your setup
+
+		c := NewMinioClient(
+			endpoint,
+			accessKeyID,
+			secretAccessKey,
+			useSSL,
+		)
+
+		bucketName := "optimate"
+		return storage.NewMinIOStorage(c, bucketName)
+	default:
+		log.Fatal("Unsupported Storage Type")
+	}
+
+	return nil
 }

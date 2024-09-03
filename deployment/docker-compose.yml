@@ -14,6 +14,9 @@ services:
     environment:
       DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
       USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+    networks:
+      - optimate_network
+
   optimizer-service:
     build:
       context: ./../optimizer-service
@@ -27,6 +30,12 @@ services:
     environment:
       DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
       OPTIMIZER_SERVICE_PORT: ${OPTIMIZER_SERVICE_PORT}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      DISK: ${DISK}
+    networks:
+      - optimate_network
 
   db:
     image: postgres:14
@@ -49,15 +58,18 @@ services:
     image: minio/minio
     container_name: optimate_minio
     environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
     ports:
       - "9700:9000"
-    command: server /data
+      - "9007:9001"
+    command: server /data --console-address ":9001" --address ":9000"
     volumes:
       - ./minio/data:/data
     networks:
       - optimate_network
+
 networks:
   optimate_network:
     driver: bridge

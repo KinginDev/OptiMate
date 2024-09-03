@@ -18,6 +18,7 @@ func main() {
 	// Init database
 	app := config.NewConfig()
 	db := app.InitDB()
+	storage := app.InitStorage()
 
 	// Setup Repositories
 	fileRepo := repositories.NewFileRepository(db)
@@ -30,12 +31,13 @@ func main() {
 		os.MkdirAll(storagePath, os.ModePerm)
 	}
 
-	fileService := service.NewFileService(fileRepo, storagePath)
+	fileService := service.NewFileService(fileRepo, storage)
 
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,
 		Utils:       utils.NewUtils(db),
+		Storage:     storage,
 		FileService: fileService,
 	}
 

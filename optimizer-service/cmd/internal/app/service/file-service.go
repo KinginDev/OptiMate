@@ -5,7 +5,7 @@ import (
 	"log"
 	"optimizer-service/cmd/internal/app/repositories"
 	"optimizer-service/cmd/internal/models"
-	"os"
+	"optimizer-service/cmd/internal/storage"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -18,44 +18,39 @@ type IFileService interface {
 }
 
 type FileService struct {
-	Repo        *repositories.FileRepository
-	StoragePath string
+	Repo    *repositories.FileRepository
+	Storage storage.Storage
 }
 
-func NewFileService(r *repositories.FileRepository, storagePath string) *FileService {
+func NewFileService(r *repositories.FileRepository, storage storage.Storage) *FileService {
 	return &FileService{
-		Repo:        r,
-		StoragePath: storagePath,
+		Repo:    r,
+		Storage: storage,
 	}
 }
 
 func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName string) (*models.File, error) {
 	// Construct file path
-	targetPath := filepath.Join(s.StoragePath, fileName)
-
-	// Set the output file
-	outFile, err := os.Create(targetPath)
-
+	uniqueFileName := uuid.New().String() + filepath.Ext(fileName)
+	targetPath := filepath.Join("/", uniqueFileName)
+	//save the file
+	err := s.Storage.Save(targetPath, fileData)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	defer outFile.Close()
-
-	//Copy the file data to the target UploadFile
-	bytesWritten, err := io.Copy(outFile, fileData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure the file chages are written to disk
-	err = outFile.Sync()
+	info, err := s.Storage.Retrive(targetPath)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+
+	defer info.Close()
+
+	// Retrieve the file size if the storage system doesn't provide it directly
+	// This step might need adjustments depending on the storage implementation
+	fileSize, err := io.Copy(io.Discard, info)
 
 	// Create file metadata
 	file := &models.File{
@@ -65,7 +60,7 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 		OriginalPath: targetPath,
 		Type:         filepath.Ext(fileName),
 		Status:       models.StatusUploaded,
-		Size:         bytesWritten,
+		Size:         fileSize,
 	}
 
 	err = s.Repo.CreateFile(file)
