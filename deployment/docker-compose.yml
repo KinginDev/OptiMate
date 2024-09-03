@@ -13,7 +13,8 @@ services:
       replicas: 1
     environment:
       DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
-      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+      PORT: ${PORT}
+      ENV: ${ENV}
     networks:
       - optimate_network
 
@@ -29,11 +30,12 @@ services:
       replicas: 1
     environment:
       DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
-      OPTIMIZER_SERVICE_PORT: ${OPTIMIZER_SERVICE_PORT}
+      PORT: ${PORT}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       DISK: ${DISK}
+      ENV: ${ENV}
     networks:
       - optimate_network
 
