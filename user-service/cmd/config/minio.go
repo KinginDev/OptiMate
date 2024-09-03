@@ -14,7 +14,7 @@ type MinioConfig struct {
 	UseSSL          bool
 }
 
-// Constructor
+// NewMinioClient Constructor godoc
 func NewMinioClient(endpoint, accessKeyID, secretAccessKey string, useSSL bool) *minio.Client {
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
@@ -27,8 +27,7 @@ func NewMinioClient(endpoint, accessKeyID, secretAccessKey string, useSSL bool) 
 	return minioClient
 }
 
-// Getters
-
+// GetEndpoint godoc
 func (m *MinioConfig) GetEndpoint() string {
 	return m.Endpoint
 }

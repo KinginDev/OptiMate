@@ -167,7 +167,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 }
 
-// GetUserTokens godoc
+// GetUserJWTTokens godoc
 // @Summary  get toksn
 // @Description gets all the authorization token belongin to a user
 // @Accept json
