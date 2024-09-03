@@ -9,6 +9,6 @@ import (
 
 type AppContainer struct {
 	DB          *gorm.DB
-	Utils       *utils.Utils
-	FileService *service.FileService
+	Utils       utils.IUtils
+	FileService service.IFileService // interface
 }

@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type IUtils interface {
+	WriteErrorResponse(c echo.Context, status int, message string) error
+	WriteSuccessResponse(c echo.Context, status int, message string, data interface{}) error
+}
+
 type Utils struct {
 	DB *gorm.DB
 }

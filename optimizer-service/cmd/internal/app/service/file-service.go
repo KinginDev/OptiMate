@@ -11,6 +11,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// IFileService is an interface for the file service
+// It defines the methods that the file service should implement
+type IFileService interface {
+	UploadFile(userID string, fileData io.Reader, fileName string) (*models.File, error)
+}
+
 type FileService struct {
 	Repo        *repositories.FileRepository
 	StoragePath string
