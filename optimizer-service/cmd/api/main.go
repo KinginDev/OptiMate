@@ -37,7 +37,6 @@ func main() {
 	container := &types.AppContainer{
 		DB:          db,
 		Utils:       utils.NewUtils(db),
-		Storage:     storage,
 		FileService: fileService,
 	}
 
