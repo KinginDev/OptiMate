@@ -27,7 +27,7 @@ jobs:
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' #only build and deploy on develop branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v4
       - name: Heroku Container Login
@@ -35,16 +35,24 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: heroku container:login
       - name: Build and Push User Service Docker Image
+        id: deploy-user-service
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           cd ./user-service
           heroku container:push web -a optimate-user-service-dev
           heroku container:release web -a optimate-user-service-dev
+      - name: Rollback User Service on Failure
+        if: failure() && steps.deploy-user-service.conclusion == 'failure'
+        run: heroku releases:rollback -a optimate-user-service-dev
       - name: Build and Push Optimizer Service Docker Image
+        id: deploy-optimizer-service
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           cd ./optimizer-service
           heroku container:push web -a optimate-optimizer-service-dev
           heroku container:release web -a optimate-optimizer-service-dev
+      - name: Rollback Optimizer Service on Failure
+        if: failure() && steps.deploy-optimizer-service.conclusion == 'failure'
+        run: heroku releases:rollback -a optimate-optimizer-service-dev
