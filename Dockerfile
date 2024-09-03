@@ -1,5 +1,5 @@
 # Start with a base image containing Go runtime
-FROM golang:1.23 as builder
+FROM golang:1.23 as userServiceBuilder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -27,7 +27,7 @@ WORKDIR /root/
 RUN apk --no-cache add ca-certificates
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /bin/user-service .
+COPY --from=userServiceBuilder /bin/user-service .
 
 # Command to run the executable
 CMD ["./user-service"]
