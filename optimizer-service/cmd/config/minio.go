@@ -23,7 +23,6 @@ func NewMinioClient(endpoint, rootUser, rootPassword string, useSSL bool) *minio
 	})
 	if err != nil {
 		log.Printf("Failed to connect to Minio %v", err)
-		panic(err)
 	}
 	log.Printf("Connected to Minio")
 	return minioClient

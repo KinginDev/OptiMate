@@ -1,3 +1,4 @@
+// Package handler
 package handler
 
 import (
@@ -37,7 +38,9 @@ func setUpTest() (*echo.Echo, *types.AppContainer) {
 	}
 
 	fileRepo := repositories.NewFileRepository(db)
-	fileService := service.NewFileService(fileRepo, &storage.LocalStorage{})
+	fileService := service.NewFileService(fileRepo, &storage.LocalStorage{
+		BasePath: "uploads",
+	})
 	container := &types.AppContainer{
 		Utils:       utils.NewUtils(db),
 		DB:          db,

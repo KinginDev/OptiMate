@@ -40,7 +40,7 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 		return nil, err
 	}
 
-	info, err := s.Storage.Retrive(targetPath)
+	info, err := s.Storage.Retrieve(targetPath)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -51,6 +51,12 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 	// Retrieve the file size if the storage system doesn't provide it directly
 	// This step might need adjustments depending on the storage implementation
 	fileSize, err := io.Copy(io.Discard, info)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	// Create file metadata
 	file := &models.File{
 		ID:           uuid.New().String(),

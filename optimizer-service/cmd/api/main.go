@@ -24,13 +24,6 @@ func main() {
 	fileRepo := repositories.NewFileRepository(db)
 
 	// Setup Services
-	storagePath := "./storage/uploads"
-
-	//if the dir has not been created create it
-	if _, err := os.Stat(storagePath); err != nil {
-		os.MkdirAll(storagePath, os.ModePerm)
-	}
-
 	fileService := service.NewFileService(fileRepo, storage)
 
 	// Init App Container

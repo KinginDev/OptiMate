@@ -66,7 +66,9 @@ func connectToPostgress() (*gorm.DB, error) {
 	return db, nil
 }
 
-// Setup Storage
+// setUpStorage godoc
+// @Summary Set up storage
+// @Description Set up storage
 func setUpStorage() storage.Storage {
 	//Get disk from env
 	disk := os.Getenv("DISK")
@@ -75,10 +77,12 @@ func setUpStorage() storage.Storage {
 		//setup local
 		basePath := "./storage/uploads"
 
-		//if the dir has not been created create it
+		// checks if the directory exists.
 		_, err := os.Stat(basePath)
 
+		// If it doesn't, os.IsNotExist(err) returns`true`
 		if os.IsNotExist(err) {
+			// Create the directory
 			errDir := os.MkdirAll(basePath, 0755)
 			if errDir != nil {
 				log.Printf("Error creating directory %v", errDir)
@@ -87,6 +91,7 @@ func setUpStorage() storage.Storage {
 			// If os.Stat returned an error other than ErrNotExist, handle it
 			log.Printf("Error checking directory %v", err)
 		}
+
 		return storage.NewLocalStorage(basePath)
 	case "minio":
 		//setup minio
@@ -102,7 +107,7 @@ func setUpStorage() storage.Storage {
 			rootPassword,
 			useSSL,
 		)
-
+		log.Printf("Minio Config is %s\n", c)
 		bucketName := "optimate"
 		return storage.NewMinIOStorage(c, bucketName)
 	default:

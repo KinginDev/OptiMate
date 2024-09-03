@@ -27,13 +27,13 @@ func (m *MinIOStorage) Save(filePath string, data io.Reader) error {
 		minio.PutObjectOptions{},
 	)
 	if err != nil {
-		log.Printf("Error saving file %v", err)
+		log.Printf("Error saving file to %v, %v", m.BucketName, err)
 		return err
 	}
 	return nil
 }
 
-func (m *MinIOStorage) Retrive(filePath string) (io.ReadCloser, error) {
+func (m *MinIOStorage) Retrieve(filePath string) (io.ReadCloser, error) {
 	file, err := m.Client.GetObject(
 		context.Background(),
 		m.BucketName,
@@ -41,7 +41,7 @@ func (m *MinIOStorage) Retrive(filePath string) (io.ReadCloser, error) {
 		minio.GetObjectOptions{},
 	)
 	if err != nil {
-		log.Printf("Error retrieving file %v", err)
+		log.Printf("Error retrieving file to %v, %v", m.BucketName, err)
 		return nil, err
 	}
 	return file, nil
@@ -55,9 +55,26 @@ func (m *MinIOStorage) Delete(filePath string) error {
 		minio.RemoveObjectOptions{})
 
 	if err != nil {
-		log.Printf("Error deleting file %v", err)
+		log.Printf("Error deleting file to %v, %v", m.BucketName, err)
 		return err
 	}
 
 	return nil
+}
+
+func (m *MinIOStorage) Exists(filePath string) (bool, error) {
+	_, err := m.Client.StatObject(
+		context.Background(),
+		m.BucketName,
+		filePath,
+		minio.StatObjectOptions{},
+	)
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return false, nil
+		}
+		log.Printf("Error checking if file exists %v, %v", m.BucketName, err)
+		return false, err
+	}
+	return true, nil
 }
