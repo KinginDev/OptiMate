@@ -13,7 +13,7 @@ services:
       replicas: 1
     environment:
       DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
-
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
   optimizer-service:
     build:
       context: ./../optimizer-service
@@ -26,6 +26,7 @@ services:
       replicas: 1
     environment:
       DSN: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:${DB_PORT}/${POSTGRES_DB}?sslmode=disable"
+      OPTIMIZER_SERVICE_PORT: ${OPTIMIZER_SERVICE_PORT}
 
   db:
     image: postgres:14

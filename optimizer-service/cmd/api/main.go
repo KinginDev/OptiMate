@@ -56,5 +56,6 @@ func main() {
 	e.GET("/", h.HomePage)
 	e.POST("/upload", h.PostUploadFile)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	optimizerServicePort := os.Getenv("OPTIMIZER_SERVICE_PORT")
+	e.Logger.Fatal(e.Start(":" + optimizerServicePort))
 }

@@ -35,15 +35,25 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 
 	// Set the output file
 	outFile, err := os.Create(targetPath)
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+
 	defer outFile.Close()
 
 	//Copy the file data to the target UploadFile
-	_, err = io.Copy(outFile, fileData)
+	bytesWritten, err := io.Copy(outFile, fileData)
+
 	if err != nil {
+		return nil, err
+	}
+
+	// Ensure the file chages are written to disk
+	err = outFile.Sync()
+	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -54,6 +64,8 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 		OriginalName: fileName,
 		OriginalPath: targetPath,
 		Type:         filepath.Ext(fileName),
+		Status:       models.StatusUploaded,
+		Size:         bytesWritten,
 	}
 
 	err = s.Repo.CreateFile(file)
