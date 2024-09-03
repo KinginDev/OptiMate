@@ -18,7 +18,7 @@ jobs:
       - name: Build User Service
         run: cd ./user-service && go build -v cmd/api/main.go
       - name: Test User Service
-        run: cd ./user-service/cmd/api/handler && go test -v
+        run: cd ./user-service/cmd/internal/app/handler && go test -v
       - name: Build Optimizer Service
         run: cd ./optimizer-service && go build -v cmd/api/main.go
       - name: Test Optimizer Service
