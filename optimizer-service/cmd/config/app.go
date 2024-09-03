@@ -56,9 +56,9 @@ func (app *Config) InitStorage() storage.Storage {
 }
 
 func connectToPostgress() (*gorm.DB, error) {
-	DSN := os.Getenv("DSN")
-	log.Printf("DSN %v\n", DSN)
-	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
+	DATABASE_URL := os.Getenv("DATABASE_URL")
+	log.Printf("DATABASE_URL %v\n", DATABASE_URL)
+	db, err := gorm.Open(postgres.Open(DATABASE_URL), &gorm.Config{})
 	if err != nil {
 		log.Printf("Failed to connect to database %v", err)
 		return nil, err

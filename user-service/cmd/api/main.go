@@ -68,6 +68,6 @@ func main() {
 	// 	return c.File("./docs/swagger.json")
 	// })
 
-	userServicePort := os.Getenv("USER_SERVICE_PORT")
+	userServicePort := os.Getenv("PORT")
 	e.Logger.Fatal(e.Start(":" + userServicePort))
 }
