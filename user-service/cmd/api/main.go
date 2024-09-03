@@ -11,6 +11,8 @@ import (
 	"user-service/cmd/internal/utils"
 	"user-service/cmd/internal/validators"
 
+	_ "user-service/cmd/api/docs"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"

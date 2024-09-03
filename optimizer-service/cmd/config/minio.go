@@ -28,20 +28,26 @@ func NewMinioClient(endpoint, rootUser, rootPassword string, useSSL bool) *minio
 	return minioClient
 }
 
-// Getters
-
+// GetEndpoint returns the endpoint
+// It takes no input
 func (m *MinioConfig) GetEndpoint() string {
 	return m.Endpoint
 }
 
+// GetAccessKeyID returns the access key ID
+// It takes no input
 func (m *MinioConfig) GetAccessKeyID() string {
 	return m.AccessKeyID
 }
 
+// GetSecretAccessKey returns the secret access key
 func (m *MinioConfig) GetSecretAccessKey() string {
 	return m.SecretAccessKey
 }
 
+// GetUseSSL returns the use SSL
 func (m *MinioConfig) GetUseSSL() bool {
 	return m.UseSSL
 }
+
+//swag init --generalInfo ./cmd/api/main.go  --exclude vendor

@@ -107,7 +107,7 @@ func setUpStorage() storage.Storage {
 			rootPassword,
 			useSSL,
 		)
-		log.Printf("Minio Config is %s\n", c)
+		log.Printf("Minio Config is %v\n", c)
 		bucketName := "optimate"
 		return storage.NewMinIOStorage(c, bucketName)
 	default:

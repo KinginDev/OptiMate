@@ -12,6 +12,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	_ "optimizer-service/cmd/api/docs"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func main() {
@@ -48,6 +52,8 @@ func main() {
 	}))
 
 	e.GET("/", h.HomePage)
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+
 	e.POST("/upload", h.PostUploadFile)
 
 	optimizerServicePort := os.Getenv("PORT")

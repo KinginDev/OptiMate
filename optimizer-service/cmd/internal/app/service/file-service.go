@@ -17,18 +17,26 @@ type IFileService interface {
 	UploadFile(userID string, fileData io.Reader, fileName string) (*models.File, error)
 }
 
+// FileService is a struct for the file service
+// It implements the IFileService interface
 type FileService struct {
-	Repo    *repositories.FileRepository
+	Repo    repositories.IFileRepository
 	Storage storage.Storage
 }
 
-func NewFileService(r *repositories.FileRepository, storage storage.Storage) *FileService {
+// NewFileService creates a new file service
+// It returns a pointer to the file service
+func NewFileService(r repositories.IFileRepository, storage storage.Storage) *FileService {
 	return &FileService{
 		Repo:    r,
 		Storage: storage,
 	}
 }
 
+// UploadFile uploads a file to the storage system
+// It returns a file and an error
+// It takes a userID, fileData and fileName as input
+// It saves the file to the storage system and creates a file metadata
 func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName string) (*models.File, error) {
 	// Construct file path
 	uniqueFileName := uuid.New().String() + filepath.Ext(fileName)

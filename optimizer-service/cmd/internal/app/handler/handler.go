@@ -10,14 +10,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Handler struct to hold the db instance
 type Handler struct {
 	Container *types.AppContainer
 }
 
+// NewHandler function to initialize the handler with the given DB instance
 func NewHandler(c *types.AppContainer) *Handler {
 	return &Handler{Container: c}
 }
 
+// HomePage godoc
+// @Summary Index Welcome
+// @Description Index Welcome
+// @Success 200 {object} utils.JSONResponse "success"
+// @Router / [get]
 func (h *Handler) HomePage(c echo.Context) error {
 	response := map[string]interface{}{
 		"message": "Index Welcome",
@@ -26,6 +33,15 @@ func (h *Handler) HomePage(c echo.Context) error {
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "success", response)
 }
 
+// PostUploadFile godoc
+// @Summary Upload a file
+// @Description Upload a file
+// @Accept mpfd
+// @Produce json
+// @Param file formData file true "File to upload"
+// @Success 200 {object} utils.JSONResponse "Successfully uploaded the file, optimization starting soon, you will get an email"
+// @Failure 400 {object} utils.JSONResponse "Error uploading file"
+// @Router /upload [post]
 func (h *Handler) PostUploadFile(c echo.Context) error {
 	userId := uuid.New().String()
 
