@@ -51,12 +51,11 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 	// Retrieve the file size if the storage system doesn't provide it directly
 	// This step might need adjustments depending on the storage implementation
 	fileSize, err := io.Copy(io.Discard, info)
-
 	// Create file metadata
 	file := &models.File{
 		ID:           uuid.New().String(),
 		UserID:       userId,
-		OriginalName: fileName,
+		OriginalName: uniqueFileName,
 		OriginalPath: targetPath,
 		Type:         filepath.Ext(fileName),
 		Status:       models.StatusUploaded,

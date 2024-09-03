@@ -32,14 +32,14 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	// Get the submitted file
 	file, err := c.FormFile("file")
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error getting file from form data %v", err)
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	// Open the file
 	src, err := file.Open()
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error opening the file %v", err)
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 	defer src.Close()
@@ -47,7 +47,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	//Uplaod file
 	uploadedFile, err := h.Container.FileService.UploadFile(userId, src, file.Filename)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error uploading file %v", err)
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 

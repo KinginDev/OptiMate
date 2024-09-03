@@ -83,14 +83,14 @@ func setUpStorage() storage.Storage {
 	case "minio":
 		//setup minio
 		endpoint := os.Getenv("MINIO_ENDPOINT")
-		accessKeyID := os.Getenv("MINIO_ACCESS_KEY")
-		secretAccessKey := os.Getenv("MINIO_SECRET_KEY")
+		rootUser := os.Getenv("MINIO_ROOT_USER")
+		rootPassword := os.Getenv("MINIO_ROOT_PASSWORD")
 		useSSL := false // Configurable based on your setup
 
 		c := NewMinioClient(
 			endpoint,
-			accessKeyID,
-			secretAccessKey,
+			rootUser,
+			rootPassword,
 			useSSL,
 		)
 

@@ -15,12 +15,10 @@ type MinioConfig struct {
 }
 
 // Constructor
-func NewMinioClient(endpoint, accessKeyID, secretAccessKey string, useSSL bool) *minio.Client {
-	if endpoint == "" {
-		endpoint = "optimate_minio:9000"
-	}
+func NewMinioClient(endpoint, rootUser, rootPassword string, useSSL bool) *minio.Client {
+
 	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Creds:  credentials.NewStaticV4(rootUser, rootPassword, ""),
 		Secure: useSSL,
 	})
 	if err != nil {
