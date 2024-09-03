@@ -13,8 +13,7 @@ import (
 )
 
 type Config struct {
-	DB     *gorm.DB
-	Models models.Models
+	DB *gorm.DB
 }
 
 var counts int64

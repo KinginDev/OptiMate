@@ -15,7 +15,6 @@ type MinioConfig struct {
 }
 
 // Constructor
-
 func NewMinioClient(endpoint, accessKeyID, secretAccessKey string, useSSL bool) *minio.Client {
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),

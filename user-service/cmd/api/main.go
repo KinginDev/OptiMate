@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"user-service/cmd/config"
 	"user-service/cmd/internal/app/handler"
 	"user-service/cmd/internal/app/repositories"
@@ -67,5 +68,6 @@ func main() {
 	// 	return c.File("./docs/swagger.json")
 	// })
 
-	e.Logger.Fatal(e.Start(":8080"))
+	userServicePort := os.Getenv("USER_SERVICE_PORT")
+	e.Logger.Fatal(e.Start(":" + userServicePort))
 }
