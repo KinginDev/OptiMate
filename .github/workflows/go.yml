@@ -25,8 +25,8 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           cd ./user-service
-          heroku container:push web --app optimate-user-service-dev
-          heroku container:release web --app optimate-user-service-dev
+          heroku container:push web -a optimate-user-service-dev
+          heroku container:release web -a optimate-user-service-dev
 
       # Build and Push Optimizer Service Docker Image
       - name: Build and Push Optimizer Service Docker Image
@@ -34,5 +34,5 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           cd ./optimizer-service
-          heroku container:push web --app optimate-optimizer-service-dev
-          heroku container:release web --app optimate-optimizer-service-dev
+          heroku container:push web -a optimate-optimizer-service-dev
+          heroku container:release web -a optimate-optimizer-service-dev
