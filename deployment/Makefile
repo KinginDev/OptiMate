@@ -6,7 +6,7 @@ build_user_service:
 	cd ../user-service && swag init --generalInfo ./cmd/api/main.go  -o ./cmd/api/docs
 	@echo "Swagger docs generated for user service"
 	@echo "Building user service"
-	cd ../optimizer-service && env GOOS=linux CGO_ENABLED=0 go build -o ${USER_SERVICE_BINARY} ./cmd/api/main.go
+	cd ../user-service && env GOOS=linux CGO_ENABLED=0 go build -o ${USER_SERVICE_BINARY} ./cmd/api/main.go
 	@echo "User service build completed"
 
 build_optimizer_service:

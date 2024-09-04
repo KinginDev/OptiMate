@@ -25,5 +25,6 @@ go.work.sum
 .env
 
 deployment/minio
+deployment/Makefile
 user-service/bin/*
 optimizer-service/bin/*
