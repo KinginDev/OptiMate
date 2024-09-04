@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -47,7 +48,13 @@ func (m *MinioConfig) GetSecretAccessKey() string {
 
 // GetUseSSL returns the use SSL
 func (m *MinioConfig) GetUseSSL() bool {
-	return m.UseSSL
+	env := os.Getenv("ENV")
+	switch env {
+	case "production":
+		return true
+	default:
+		return false
+	}
 }
 
 //swag init --generalInfo ./cmd/api/main.go  --exclude vendor
