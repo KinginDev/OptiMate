@@ -108,7 +108,7 @@ func setUpStorage() storage.Storage {
 			useSSL,
 		)
 		log.Printf("Minio Config is %v\n", c)
-		bucketName := "optimate"
+		bucketName := os.Getenv("MINIO_BUCKET_NAME")
 		return storage.NewMinIOStorage(c, bucketName)
 	default:
 		log.Println("Unsupported Storage Type")
