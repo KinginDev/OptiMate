@@ -9,17 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// JWTAuthentication godoc
-// @Summary JWT Authentication middleware
-// @Description JWT Authentication middleware
-// @Param Authorization header string true "
-// @Tags JWT
-// @Accept json
-// @Produce json
-// @Success 200 {object} string "success"
-// @Failure 401 {object} string "Unauthorized"
-// JWTAuthentication is a middleware function that validates the JWT token
-// and sets the user ID in the echo context
+// JWTAuthentication is a middleware that checks if the request has a valid JWT token
+// and if the token is not revoked
 func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
