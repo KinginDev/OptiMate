@@ -25,4 +25,5 @@ go.work.sum
 .env
 
 deployment/minio
-user-service/bin/userService
+user-service/bin/*
+optimizer-service/bin/*
