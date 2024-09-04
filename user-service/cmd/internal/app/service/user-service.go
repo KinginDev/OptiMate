@@ -10,14 +10,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// UserService is a service that handles user operations
 type UserService struct {
 	Repo *repositories.UserRepository
 }
 
+// NewUserService creates a new instance of UserService
+// It returns a pointer to the instance
 func NewUserService(repo *repositories.UserRepository) *UserService {
 	return &UserService{Repo: repo}
 }
 
+// RegisterUser registers a new user
+// It returns a user and an error if the operation fails
 func (s *UserService) RegisterUser(input *models.RegisterInput) (*models.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -35,6 +40,8 @@ func (s *UserService) RegisterUser(input *models.RegisterInput) (*models.User, e
 	return s.Repo.CreateUser(user)
 }
 
+// AuthenticateUser authenticates a user
+// It returns a user and an error if the operation fails
 func (s *UserService) AuthenticateUser(email, password string) (*models.User, error) {
 	user, err := s.Repo.GetUserByEmail(email)
 

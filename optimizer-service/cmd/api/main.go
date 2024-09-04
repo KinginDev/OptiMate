@@ -12,25 +12,23 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	_ "optimizer-service/cmd/api/docs"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func main() {
 	// Init database
 	app := config.NewConfig()
 	db := app.InitDB()
+	storage := app.InitStorage()
 
 	// Setup Repositories
 	fileRepo := repositories.NewFileRepository(db)
 
 	// Setup Services
-	storagePath := "./storage/uploads"
-
-	//if the dir has not been created create it
-	if _, err := os.Stat(storagePath); err != nil {
-		os.MkdirAll(storagePath, os.ModePerm)
-	}
-
-	fileService := service.NewFileService(fileRepo, storagePath)
+	fileService := service.NewFileService(fileRepo, storage)
 
 	// Init App Container
 	container := &types.AppContainer{
@@ -54,6 +52,8 @@ func main() {
 	}))
 
 	e.GET("/", h.HomePage)
+	e.GET("/docs/*", echoSwagger.WrapHandler)
+
 	e.POST("/upload", h.PostUploadFile)
 
 	optimizerServicePort := os.Getenv("PORT")

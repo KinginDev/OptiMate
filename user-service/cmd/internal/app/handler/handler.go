@@ -7,6 +7,7 @@ import (
 	"time"
 	"user-service/cmd/internal/models"
 	"user-service/cmd/internal/types"
+	"user-service/cmd/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -17,6 +18,7 @@ type Handler struct {
 	Container *types.AppContainer
 }
 
+// UserJSONResponse struct to hold the response data
 type UserJSONResponse struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
@@ -29,20 +31,14 @@ func NewHandler(container *types.AppContainer) *Handler {
 	}
 }
 
-type JSONResponse struct {
-	Data    interface{} `json:"data"`
-	Status  int         `json:"status"`
-	Message string      `json:"message"`
-}
-
 // Index godoc
 // @Summary User service is running
 // @Description User service is running
-// @Success 200 {object} nil "success"
-// @Failure 404 {object} nil "Not Found"
+// @Success 200 {object} utils.JSONResponse "success"
+// @Failure 404 {object} utils.JSONResponse "Not Found"
 // @Router / [get]
 func (h *Handler) Index(c echo.Context) error {
-	response := &JSONResponse{
+	response := &utils.JSONResponse{
 		Data:    "Welcome to the User Service!",
 		Message: "Service is running.",
 		Status:  http.StatusOK,
@@ -55,11 +51,16 @@ func (h *Handler) Index(c echo.Context) error {
 // @Description Register a new user
 // @Accept json
 // @Produce json
-// @Success 201 {object} JSONResponse "User created successfully"
-// @Failure 400 {object} JSONResponse "Invalid request payload"
-// @Failure 400 {object} JSONResponse "Failed to create user"
-// @Failure 409 {object} JSONResponse "Email already exists"
+// @Success 201 {object} utils.JSONResponse "User created successfully"
+// @Failure 400 {object} utils.JSONResponse "Invalid request payload"
+// @Failure 400 {object} utils.JSONResponse "Failed to create user"
+// @Failure 409 {object} utils.JSONResponse "Email already exists"
 // @Router /register [post]
+// @Param email formData string true "Email"
+// @Param password formData string true "Password"
+// @Param firstname formData string true "Firstname"
+// @Param lastname formData string true "Lastname"
+// @Tags user
 func (h *Handler) Register(c echo.Context) error {
 	var input models.RegisterInput
 	/**
@@ -123,10 +124,15 @@ func (h *Handler) Register(c echo.Context) error {
 // @Description Login a user
 // @Accept json
 // @Produce json
-// @Success 200 {object} JSONResponse "Login successful"
-// @Failure 400 {object} JSONResponse "Invalid request payload"
-// @Failure 401 {object} JSONResponse "Invalid password"
-// @Failure 404 {object} JSONResponse "User not found"
+// @Success 200 {object} utils.JSONResponse "Login successful"
+// @Failure 400 {object} utils.JSONResponse "Invalid request payload"
+// @Failure 401 {object} utils.JSONResponse "Invalid password"
+// @Failure 404 {object} utils.JSONResponse "User not found"
+// @Failure 500 {object} utils.JSONResponse "Failed to create token"
+// @Router /login [post]
+// @Param email formData string true "Email"
+// @Param password formData string true "Password"
+// @Tags user
 func (h *Handler) Login(c echo.Context) error {
 	u := new(models.User)
 	if err := c.Bind(u); err != nil {
@@ -173,10 +179,14 @@ func (h *Handler) Login(c echo.Context) error {
 // @Description gets all the authorization token belongin to a user
 // @Accept json
 // @Produce json
-// @Success 200 (object) JSONResponse "User tokens retrieved successfully"
-// @Faliure 400 (object) JSONResponse "User not found"
-// @Faliure 404 (object) JSONResponse "User not found"
-// @Faliure 500 (object) JSONResponse "Failed to fetch tokens"
+// @Success 200 {object} utils.JSONResponse "User tokens retrieved successfully"
+// @Faliure 400 {object} utils.JSONResponse "User not found"
+// @Faliure 404 {object} utils.JSONResponse "User not found"
+// @Faliure 500 {object} utils.JSONResponse "Failed to fetch tokens"
+// @Router /tokens [get]
+// @Tags user
+// @Security Bearer
+// @Param Authorization header string true "Bearer token"
 func (h *Handler) GetUserJWTTokens(c echo.Context) error {
 
 	// Get the user id from the middleware

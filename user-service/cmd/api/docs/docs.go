@@ -21,10 +21,79 @@ const docTemplate = `{
                 "summary": "User service is running",
                 "responses": {
                     "200": {
-                        "description": "success"
+                        "description": "success",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
                     },
                     "404": {
-                        "description": "Not Found"
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Login a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Login a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid password",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create token",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
                     }
                 }
             }
@@ -38,24 +107,94 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "user"
+                ],
                 "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Firstname",
+                        "name": "firstname",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lastname",
+                        "name": "lastname",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "User created successfully",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/utils.JSONResponse"
                         }
                     },
                     "400": {
                         "description": "Failed to create user",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/utils.JSONResponse"
                         }
                     },
                     "409": {
                         "description": "Email already exists",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/utils.JSONResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tokens": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "gets all the authorization token belongin to a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "get toksn",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User tokens retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/utils.JSONResponse"
                         }
                     }
                 }
@@ -63,7 +202,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.JSONResponse": {
+        "utils.JSONResponse": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -72,6 +211,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         }
@@ -80,8 +222,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "0.1.0",
-	Host:             "localhost:8020",
+	Version:          "",
+	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "",

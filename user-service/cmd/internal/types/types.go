@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// AppContainer is a container for the application
 type AppContainer struct {
 	Utils       *utils.Utils
 	DB          *gorm.DB

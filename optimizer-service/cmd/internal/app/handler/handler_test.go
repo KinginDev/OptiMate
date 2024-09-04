@@ -1,3 +1,4 @@
+// Package handler
 package handler
 
 import (
@@ -9,6 +10,7 @@ import (
 	"optimizer-service/cmd/internal/app/repositories"
 	"optimizer-service/cmd/internal/app/service"
 	"optimizer-service/cmd/internal/models"
+	"optimizer-service/cmd/internal/storage"
 	"optimizer-service/cmd/internal/types"
 	"optimizer-service/cmd/internal/utils"
 	"optimizer-service/cmd/lib/mocks"
@@ -36,7 +38,9 @@ func setUpTest() (*echo.Echo, *types.AppContainer) {
 	}
 
 	fileRepo := repositories.NewFileRepository(db)
-	fileService := service.NewFileService(fileRepo, "./storage/uploads")
+	fileService := service.NewFileService(fileRepo, &storage.LocalStorage{
+		BasePath: "uploads",
+	})
 	container := &types.AppContainer{
 		Utils:       utils.NewUtils(db),
 		DB:          db,
@@ -134,7 +138,7 @@ func TestPostUploadFileWithFailure(t *testing.T) {
 	// Mock failed upload
 	mockFileService.On("UploadFile", mock.Anything, mock.Anything, mock.Anything).Return(expectedFile, fmt.Errorf("error"))
 
-	// Mock write error response
+	// Mock
 	mockUtils.On("WriteErrorResponse", mock.Anything, http.StatusBadRequest, "error").Return(nil)
 
 	// Create a handler

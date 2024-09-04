@@ -7,7 +7,6 @@ linters-settings:
   gofmt:
     simplify: true
   revive:
-    rule:
       severity: warning
 
 linters:
