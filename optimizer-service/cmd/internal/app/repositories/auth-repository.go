@@ -12,6 +12,9 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 	return &AuthRepository{DB: db}
 }
 
+// @note: We Can establish any kind of communication we want here,
+// with the user service or any other service
+
 // Should return user type or error
 func (r *AuthRepository) Login(email, password string) (string, error) {
 	// userServiceUrl := "http://localhost:8020/login"
