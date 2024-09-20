@@ -75,6 +75,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 
 func (h *Handler) LoginUser(c echo.Context) error {
 	u := new(types.LoginInput)
+	// userServiceUrl := "http://localhost:8020/login"
 	if err := c.Bind(u); err != nil {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
