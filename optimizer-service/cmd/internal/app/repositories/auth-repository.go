@@ -14,6 +14,7 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 
 // Should return user type or error
 func (r *AuthRepository) Login(email, password string) (string, error) {
+	// userServiceUrl := "http://localhost:8020/login"
 	return "", nil
 }
 
