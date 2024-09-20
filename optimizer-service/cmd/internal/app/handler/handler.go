@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"optimizer-service/cmd/internal/types"
@@ -70,4 +71,13 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	}
 
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", uploadedFile)
+}
+
+func (h *Handler) LoginUser(c echo.Context) error {
+	u := new(types.LoginInput)
+	if err := c.Bind(u); err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+	}
+
+	return errors.New("not implemented")
 }

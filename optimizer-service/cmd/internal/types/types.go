@@ -12,3 +12,8 @@ type AppContainer struct {
 	Utils       utils.IUtils
 	FileService service.IFileService // interface
 }
+
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}

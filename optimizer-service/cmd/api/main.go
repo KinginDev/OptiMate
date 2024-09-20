@@ -30,6 +30,8 @@ func main() {
 	// Setup Services
 	fileService := service.NewFileService(fileRepo, storage)
 
+	//Setup AuthService
+
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,
