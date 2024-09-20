@@ -10,11 +10,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// JWTService is a service that handles JWT token generation, validation, and revocation
 type JWTService struct {
 	Repo      *repositories.JWTRepository
 	SecretKey string
 }
 
+// NewJWTService creates a new instance of JWTService
 func NewJWTService(repo *repositories.JWTRepository, secretKey string) *JWTService {
 	return &JWTService{
 		Repo:      repo,
@@ -22,6 +24,8 @@ func NewJWTService(repo *repositories.JWTRepository, secretKey string) *JWTServi
 	}
 }
 
+// GenerateJWTToken generates a new JWT token
+// It returns a token string and an error if the operation fails
 func (s *JWTService) GenerateJWTToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
@@ -35,6 +39,8 @@ func (s *JWTService) GenerateJWTToken(userID string) (string, error) {
 	return tokenString, nil
 }
 
+// ValidateToken validates a JWT token
+// It returns a token and an error if the operation fails
 func (s *JWTService) ValidateToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Ensure the token method conform to "SigningMethodHMAC"
@@ -49,14 +55,20 @@ func (s *JWTService) ValidateToken(tokenString string) (*jwt.Token, error) {
 	return token, nil
 }
 
+// GetUserTokens retrieves all tokens for a user
+// It returns a list of tokens and an error
 func (s *UserService) GetUserTokens(id string) ([]models.PersonalToken, error) {
 	return s.Repo.GetTokensByUserID(id)
 }
 
+// StoreToken stores a token in the database
+// It returns an error if the operation fails
 func (s *JWTService) StoreToken(token *models.PersonalToken) error {
 	return s.Repo.StoreToken(token)
 }
 
+// RevokeToken revokes a token by setting the revoked field to true
+// It returns an error if the operation fails
 func (s *JWTService) RevokeToken(tokenString string) error {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return nil, nil // don't need the key for just checking expiration
@@ -84,10 +96,14 @@ func (s *JWTService) RevokeToken(tokenString string) error {
 	return s.Repo.RevokeToken(tokenString)
 }
 
+// CheckTokenRevocation checks if a token has been revoked
+// It returns a boolean and an error
 func (s *JWTService) CheckTokenRevocation(token string) (bool, error) {
 	return s.Repo.CheckTokenRevocation(token)
 }
 
+// GetUserIDFromToken retrieves the user ID from a JWT token
+// It returns the user ID and an error if the operation fails
 func (s *JWTService) GetUserIDFromToken(tokenString string) (string, error) {
 	token, err := s.ValidateToken(tokenString)
 	if err != nil {

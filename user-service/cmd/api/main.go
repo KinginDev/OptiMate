@@ -11,6 +11,8 @@ import (
 	"user-service/cmd/internal/utils"
 	"user-service/cmd/internal/validators"
 
+	_ "user-service/cmd/api/docs"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -55,6 +57,7 @@ func main() {
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
+
 	// Docs Routes
 	e.GET("/docs/*", echoSwagger.WrapHandler)
 
@@ -63,11 +66,8 @@ func main() {
 	authGroup.Use(interceptor.JWTAuthentication(jwtService))
 	authGroup.GET("/tokens", h.GetUserJWTTokens)
 
-	// Serve docs directly
-	// e.GET("/docs/swagger.json", func(c echo.Context) error {
-	// 	return c.File("./docs/swagger.json")
-	// })
-
-	userServicePort := os.Getenv("USER_SERVICE_PORT")
+	userServicePort := os.Getenv("PORT")
 	e.Logger.Fatal(e.Start(":" + userServicePort))
 }
+
+// swag init --generalInfo ./cmd/api/main.go  -o ./cmd/api/docs

@@ -193,7 +193,7 @@ func TestLoginSuccess(t *testing.T) {
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response JSONResponse
+		var response utils.JSONResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		assert.NoError(t, err)
 

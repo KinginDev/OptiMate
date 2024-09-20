@@ -1,0 +1,33 @@
+run:
+  timeout: 5m
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  gofmt:
+    simplify: true
+  revive:
+      severity: warning
+
+linters:
+  enable:
+    - govet
+    - unused
+    - gocritic
+    - stylecheck
+    - errcheck
+    - unconvert
+    - gosec
+    - gofmt
+    - goimports
+    - ineffassign
+    - staticcheck
+  disable:
+    - revive
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - govet
+      text: "composite literal uses unkeyed fields"

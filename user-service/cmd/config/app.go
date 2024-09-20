@@ -12,16 +12,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// Config is a configuration for the application
 type Config struct {
 	DB *gorm.DB
 }
 
+// coubts is a counter for the number of retries to connect to the database
 var counts int64
 
+// NewConfig creates a new instance of Config
 func NewConfig() *Config {
 	return &Config{}
 }
 
+// InitDB initializes the database connection
 func (app *Config) InitDB() *gorm.DB {
 
 	for {
@@ -52,10 +56,12 @@ func (app *Config) InitDB() *gorm.DB {
 
 }
 
+// connectToPostgres connects to the postgres database
+// It returns a pointer to the database connection and an error
 func connectToPostgres() (*gorm.DB, error) {
-	DSN := os.Getenv("DSN")
-	fmt.Printf("DSN: %v\n", DSN)
-	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
+	databaseURL := os.Getenv("DATABASE_URL")
+	fmt.Printf("DATABASE_URL: %v\n", databaseURL)
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		fmt.Printf("failed to connect database %v", err)
 		return nil, err

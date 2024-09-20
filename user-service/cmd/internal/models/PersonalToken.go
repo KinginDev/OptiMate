@@ -1,6 +1,7 @@
 // Package models
 package models
 
+// PersonalToken is a model for the personal token
 type PersonalToken struct {
 	ID        string `json:"id" gorm:"type=UUID;primary_key"`
 	UserID    string `json:"user_id" gorm:"not null"`

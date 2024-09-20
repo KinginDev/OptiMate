@@ -5,7 +5,7 @@ import (
 	"log"
 	"optimizer-service/cmd/internal/app/repositories"
 	"optimizer-service/cmd/internal/models"
-	"os"
+	"optimizer-service/cmd/internal/storage"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -17,41 +17,49 @@ type IFileService interface {
 	UploadFile(userID string, fileData io.Reader, fileName string) (*models.File, error)
 }
 
+// FileService is a struct for the file service
+// It implements the IFileService interface
 type FileService struct {
-	Repo        *repositories.FileRepository
-	StoragePath string
+	Repo    repositories.IFileRepository
+	Storage storage.Storage
 }
 
-func NewFileService(r *repositories.FileRepository, storagePath string) *FileService {
+// NewFileService creates a new file service
+// It returns a pointer to the file service
+func NewFileService(r repositories.IFileRepository, storage storage.Storage) *FileService {
 	return &FileService{
-		Repo:        r,
-		StoragePath: storagePath,
+		Repo:    r,
+		Storage: storage,
 	}
 }
 
+// UploadFile uploads a file to the storage system
+// It returns a file and an error
+// It takes a userID, fileData and fileName as input
+// It saves the file to the storage system and creates a file metadata
 func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName string) (*models.File, error) {
 	// Construct file path
-	targetPath := filepath.Join(s.StoragePath, fileName)
-
-	// Set the output file
-	outFile, err := os.Create(targetPath)
-
+	uniqueFileName := uuid.New().String() + filepath.Ext(fileName)
+	targetPath := filepath.Join("/", uniqueFileName)
+	//save the file
+	err := s.Storage.Save(targetPath, fileData)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	defer outFile.Close()
-
-	//Copy the file data to the target UploadFile
-	bytesWritten, err := io.Copy(outFile, fileData)
-
+	info, err := s.Storage.Retrieve(targetPath)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
-	// Ensure the file chages are written to disk
-	err = outFile.Sync()
+	defer info.Close()
+
+	// Retrieve the file size if the storage system doesn't provide it directly
+	// This step might need adjustments depending on the storage implementation
+	fileSize, err := io.Copy(io.Discard, info)
+
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -61,11 +69,11 @@ func (s *FileService) UploadFile(userId string, fileData io.Reader, fileName str
 	file := &models.File{
 		ID:           uuid.New().String(),
 		UserID:       userId,
-		OriginalName: fileName,
+		OriginalName: uniqueFileName,
 		OriginalPath: targetPath,
 		Type:         filepath.Ext(fileName),
 		Status:       models.StatusUploaded,
-		Size:         bytesWritten,
+		Size:         fileSize,
 	}
 
 	err = s.Repo.CreateFile(file)

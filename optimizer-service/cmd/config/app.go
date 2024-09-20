@@ -4,6 +4,7 @@ package config
 import (
 	"log"
 	"optimizer-service/cmd/internal/models"
+	"optimizer-service/cmd/internal/storage"
 	"os"
 	"time"
 
@@ -12,7 +13,8 @@ import (
 )
 
 type Config struct {
-	DB *gorm.DB
+	DB      *gorm.DB
+	Storage storage.Storage
 }
 
 func NewConfig() *Config {
@@ -48,14 +50,69 @@ func (app *Config) InitDB() *gorm.DB {
 		continue
 	}
 }
+func (app *Config) InitStorage() storage.Storage {
+	app.Storage = setUpStorage()
+	return app.Storage
+}
 
 func connectToPostgress() (*gorm.DB, error) {
-	DSN := os.Getenv("DSN")
-	log.Printf("DSN %v\n", DSN)
-	db, err := gorm.Open(postgres.Open(DSN), &gorm.Config{})
+	DATABASE_URL := os.Getenv("DATABASE_URL")
+	log.Printf("DATABASE_URL %v\n", DATABASE_URL)
+	db, err := gorm.Open(postgres.Open(DATABASE_URL), &gorm.Config{})
 	if err != nil {
 		log.Printf("Failed to connect to database %v", err)
 		return nil, err
 	}
 	return db, nil
+}
+
+// setUpStorage godoc
+// @Summary Set up storage
+// @Description Set up storage
+func setUpStorage() storage.Storage {
+	//Get disk from env
+	disk := os.Getenv("DISK")
+	switch disk {
+	case "local":
+		//setup local
+		basePath := "./storage/uploads"
+
+		// checks if the directory exists.
+		_, err := os.Stat(basePath)
+
+		// If it doesn't, os.IsNotExist(err) returns`true`
+		if os.IsNotExist(err) {
+			// Create the directory
+			errDir := os.MkdirAll(basePath, 0755)
+			if errDir != nil {
+				log.Printf("Error creating directory %v", errDir)
+			}
+		} else if err != nil {
+			// If os.Stat returned an error other than ErrNotExist, handle it
+			log.Printf("Error checking directory %v", err)
+		}
+
+		return storage.NewLocalStorage(basePath)
+	case "minio":
+		//setup minio
+		m := &MinioConfig{}
+		endpoint := os.Getenv("MINIO_ENDPOINT")
+		rootUser := os.Getenv("MINIO_ROOT_USER")
+		rootPassword := os.Getenv("MINIO_ROOT_PASSWORD")
+		useSSL := m.GetUseSSL() // Configurable based on your setup
+
+		c := NewMinioClient(
+			endpoint,
+			rootUser,
+			rootPassword,
+			useSSL,
+		)
+		log.Printf("Minio Config is %v\n", c)
+		bucketName := os.Getenv("MINIO_BUCKET_NAME")
+		return storage.NewMinIOStorage(c, bucketName)
+	default:
+		log.Println("Unsupported Storage Type")
+	}
+
+	return nil
 }

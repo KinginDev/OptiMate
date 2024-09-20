@@ -1,11 +1,13 @@
 definitions:
-  handler.JSONResponse:
+  utils.JSONResponse:
     properties:
       data: {}
       message:
         type: string
       status:
         type: integer
+      success:
+        type: boolean
     type: object
 info:
   contact: {}
@@ -16,28 +18,120 @@ paths:
       responses:
         "200":
           description: success
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
       summary: User service is running
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user
+      parameters:
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "401":
+          description: Invalid password
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "500":
+          description: Failed to create token
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+      summary: Login a user
+      tags:
+      - user
   /register:
     post:
       consumes:
       - application/json
       description: Register a new user
+      parameters:
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Firstname
+        in: formData
+        name: firstname
+        required: true
+        type: string
+      - description: Lastname
+        in: formData
+        name: lastname
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "201":
           description: User created successfully
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/utils.JSONResponse'
         "400":
           description: Failed to create user
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/utils.JSONResponse'
         "409":
           description: Email already exists
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/utils.JSONResponse'
       summary: Register a new user
+      tags:
+      - user
+  /tokens:
+    get:
+      consumes:
+      - application/json
+      description: gets all the authorization token belongin to a user
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User tokens retrieved successfully
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+      security:
+      - Bearer: []
+      summary: get toksn
+      tags:
+      - user
 swagger: "2.0"
