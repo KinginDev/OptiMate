@@ -230,7 +230,7 @@ func (h *Handler) GetUserJWTTokens(c echo.Context) error {
 // @Router /validate [post]
 // @Tags user
 func (h *Handler) ValidateUserToken(c echo.Context) error {
-	//get the token from the post request body
+	// Get the token from the post request body
 	requestBody := new(types.TokenString)
 
 	if err := c.Bind(requestBody); err != nil {
@@ -249,13 +249,13 @@ func (h *Handler) ValidateUserToken(c echo.Context) error {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to validate token")
 	}
 
-	//get the user id from the token
+	// Get the user id from the token
 	userID, err := h.Container.JWTService.GetUserIDFromToken(requestBody.Token)
 	if err != nil {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Token claims are not accessible")
 	}
 
-	//get user
+	// Get user details with the user id
 	user, err := h.Container.UserService.Repo.GetUserByID(h.Container.DB, userID)
 	if err != nil {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
