@@ -2,7 +2,7 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"optimizer-service/cmd/internal/types"
@@ -73,12 +73,32 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", uploadedFile)
 }
 
+// LoginUser godoc
+// @Summary Login a user
+// @Description Login a user
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.JSONResponse "Login successful"
+// @Failure 400 {object} utils.JSONResponse "Invalid request payload"
+// @Failure 401 {object} utils.JSONResponse "Invalid password"
+// @Failure 404 {object} utils.JSONResponse "User not found"
+// @Failure 500 {object} utils.JSONResponse "Failed to create token"
+// @Router /login [post]
 func (h *Handler) LoginUser(c echo.Context) error {
 	u := new(types.LoginInput)
-	
+
 	if err := c.Bind(u); err != nil {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
 	}
+	email := u.Email
+	password := u.Password
 
-	return errors.New("not implemented")
+	fmt.Println(u)
+	// Call the auth service to login the user
+	authResult, err := h.Container.AuthService.Login(email, password)
+	if err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusUnauthorized, err.Error())
+	}
+
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Login successful", authResult)
 }

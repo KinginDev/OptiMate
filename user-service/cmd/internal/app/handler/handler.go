@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -116,7 +117,6 @@ func (h *Handler) Register(c echo.Context) error {
 	}
 
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusCreated, "User created successfully", UserJSONResponse)
-
 }
 
 // Login godoc
@@ -183,10 +183,10 @@ func (h *Handler) Login(c echo.Context) error {
 // @Faliure 400 {object} utils.JSONResponse "User not found"
 // @Faliure 404 {object} utils.JSONResponse "User not found"
 // @Faliure 500 {object} utils.JSONResponse "Failed to fetch tokens"
-// @Router /tokens [get]
 // @Tags user
 // @Security Bearer
 // @Param Authorization header string true "Bearer token"
+// @Router /tokens [get]
 func (h *Handler) GetUserJWTTokens(c echo.Context) error {
 
 	// Get the user id from the middleware
@@ -215,4 +215,59 @@ func (h *Handler) GetUserJWTTokens(c echo.Context) error {
 	}
 
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "User tokens retrieved successfully", response)
+}
+
+// ValidateUserToken godoc
+// @Summary Validate a user token
+// @Description Validate a user token
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.JSONResponse "Token is valid"
+// @Failure 400 {object} utils.JSONResponse "Invalid request payload"
+// @Failure 404 {object} utils.JSONResponse "User not found"
+// @Failure 500 {object} utils.JSONResponse "Failed to validate token"
+// @Security Bearer
+// @Router /validate [post]
+// @Tags user
+func (h *Handler) ValidateUserToken(c echo.Context) error {
+	//get the token from the post request body
+	requestBody := new(types.TokenString)
+
+	if err := c.Bind(requestBody); err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid request payload")
+	}
+
+	// Check if the token is actually present
+	if requestBody.Token == "" {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Token is missing")
+	}
+
+	fmt.Printf("Request body: %v\n", requestBody)
+
+	token, err := h.Container.JWTService.ValidateToken(requestBody.Token)
+	if err != nil || !token.Valid {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Failed to validate token")
+	}
+
+	//get the user id from the token
+	userID, err := h.Container.JWTService.GetUserIDFromToken(requestBody.Token)
+	if err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, "Token claims are not accessible")
+	}
+
+	//get user
+	user, err := h.Container.UserService.Repo.GetUserByID(h.Container.DB, userID)
+	if err != nil {
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusNotFound, "User not found")
+	}
+
+	response := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    user.ID,
+			"email": user.Email,
+		},
+	}
+
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Token is valid", response)
+
 }

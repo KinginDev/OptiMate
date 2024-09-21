@@ -38,20 +38,16 @@ func JWTAuthentication(jwtService *service.JWTService) echo.MiddlewareFunc {
 			}
 
 			// Check if token has been revoved
-			revoked, err := jwtService.CheckTokenRevocation(tokenString)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check token revocation")
-			}
+			// _, err = jwtService.CheckTokenRevocation(tokenString)
+			// if err != nil {
+			// 	log.Printf("Failed to check token revocation %v\n", err)
+			// }
 
-			if revoked {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Token has been revoked")
-			}
-
-			// Attempt revoke token
-			err = jwtService.RevokeToken(tokenString)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to revoke token")
-			}
+			// // Attempt revoke token
+			// err = jwtService.RevokeToken(tokenString)
+			// if err != nil {
+			// 	return echo.NewHTTPError(http.StatusInternalServerError, "Failed to revoke token")
+			// }
 
 			c.Set("userID", userID)
 
