@@ -2,7 +2,6 @@
 package handler
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"optimizer-service/cmd/internal/types"
@@ -93,7 +92,6 @@ func (h *Handler) LoginUser(c echo.Context) error {
 	email := u.Email
 	password := u.Password
 
-	fmt.Println(u)
 	// Call the auth service to login the user
 	authResult, err := h.Container.AuthService.Login(email, password)
 	if err != nil {
