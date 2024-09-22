@@ -12,5 +12,5 @@ type AppContainer struct {
 	DB          *gorm.DB
 	Utils       utils.IUtils
 	FileService service.IFileService // interface
-	Optimizer   optimizer.IOptimizer
+	Optimizer   optimizer.IOptimizer // Optimizer interface
 }
