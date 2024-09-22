@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"optimizer-service/cmd/internal/types"
@@ -69,5 +70,13 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
+	fmt.Printf("Uploaded file: %+v\n", uploadedFile)
+
+	optimizedFile, err := h.Container.Optimizer.Optimize(uploadedFile.ID)
+	if err != nil {
+		log.Printf("Error optimizing file %v", err)
+	}
+
+	fmt.Printf("Optimized file: %+v\n", optimizedFile)
 	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", uploadedFile)
 }
