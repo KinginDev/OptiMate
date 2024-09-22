@@ -72,7 +72,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 
 	fmt.Printf("Uploaded file: %+v\n", uploadedFile)
 
-	optimizedFile, err := h.Container.Optimizer.Optimize(uploadedFile.ID)
+	optimizedFile, err := h.Container.Optimizer.Optimize(uploadedFile.OriginalName)
 	if err != nil {
 		log.Printf("Error optimizing file %v", err)
 	}

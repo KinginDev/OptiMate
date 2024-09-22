@@ -6,7 +6,7 @@ import (
 	"image/jpeg"
 	"io"
 	"log"
-	"sync"
+	"path/filepath"
 
 	"github.com/disintegration/imaging"
 )
@@ -15,28 +15,30 @@ type CropParams struct {
 	X, Y, Width, Height int
 }
 
-func (o *Optimizer) Optimize(key string) (io.ReadCloser, error) {
+func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	// Retrieve the file
-	fileReader, err := o.Storage.Retrieve(key)
-	log.Printf("Retrieving file %s", fileReader)
+	fileReader, err := o.Storage.Retrieve(filePath)
 	if err != nil {
-		log.Printf("Error retrieving file %s: %v", key, err)
+		log.Printf("Error retrieving file %s: %v", filePath, err)
 		return nil, err
 	}
 	// close the opened file
 	defer fileReader.Close()
 
-	//Use a sync group to wait for the optimization to finish
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
 	// prepare buffer to store the optimized image as a reader
 	var optimizedBuffer bytes.Buffer
 	var optimizedImage image.Image
 
-	level := "medium"
+	level := "high"
 	oParams := OptimizerParams{
 		Level: &level,
+	}
+
+	cropParams := &CropParams{
+		X:      10,
+		Y:      12,
+		Width:  300,
+		Height: 500,
 	}
 
 	// Create a buffer to store the unoptimized image as it will be used multiple times
@@ -54,38 +56,36 @@ func (o *Optimizer) Optimize(key string) (io.ReadCloser, error) {
 	// Optimize the image based on the file type
 	switch fileType {
 	case "jpeg":
-		go func() {
-			defer wg.Done()
-			// Create a new io.Reader from fileBytes to be used for optimization
-			fileReader = io.NopCloser(bytes.NewReader(fileBytes))
 
-			// Optimize the jpeg file
-			optimizedImage, err = o.OptimizeJpeg(fileReader, oParams.Level, nil)
-			if err != nil {
-				log.Printf("Error optimizing jpeg file:- %v", err)
-				return
-			}
-			//Encode the optimized image and wrtite it to the buffer
-			err = jpeg.Encode(&optimizedBuffer, optimizedImage,
-				&jpeg.Options{Quality: o.mapJPEGQuality(*oParams.Level)})
-			if err != nil {
-				log.Printf("Error encoding optimized image:- %v", err)
-				return
-			}
-		}()
+		// Create a new io.Reader from fileBytes to be used for optimization
+		fileReader = io.NopCloser(bytes.NewReader(fileBytes))
+
+		// Optimize the jpeg file
+		optimizedImage, err = o.OptimizeJpeg(fileReader, oParams.Level, cropParams)
+		if err != nil {
+			log.Printf("Error optimizing jpeg file:- %v", err)
+			return nil, err
+		}
+		//Encode the optimized image and wrtite it to the buffer
+		err = jpeg.Encode(&optimizedBuffer, optimizedImage,
+			&jpeg.Options{Quality: o.mapJPEGQuality(*oParams.Level)})
+		if err != nil {
+			log.Printf("Error encoding optimized image:- %v", err)
+			return nil, err
+		}
+
 	case "png":
-		go func() {}()
+
 	case "webp":
-		go func() {}()
+
 	default:
 		log.Printf("Unsupported file type:- %s", fileType)
 	}
 
-	// Wait for the optimization to finish
-	wg.Wait()
-
-	optimizedKey := key + "_optimized"
-	err = o.Storage.Save(optimizedKey, &optimizedBuffer)
+	fileName := filepath.Base(filePath)
+	ext := filepath.Ext(fileName)
+	optimizedFileName := fileName[:len(fileName)-len(ext)] + "_optimized" + ext
+	err = o.Storage.Save(optimizedFileName, &optimizedBuffer)
 	if err != nil {
 		log.Printf("Error saving optimized file:- %v", err)
 		return nil, err
