@@ -8,6 +8,7 @@ import (
 	"optimizer-service/cmd/internal/app/service"
 	"optimizer-service/cmd/internal/types"
 	"optimizer-service/cmd/internal/utils"
+	"optimizer-service/cmd/lib/optimizer"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -23,18 +24,21 @@ func main() {
 	app := config.NewConfig()
 	db := app.InitDB()
 	storage := app.InitStorage()
-
+	utils := utils.NewUtils(db)
 	// Setup Repositories
 	fileRepo := repositories.NewFileRepository(db)
 
 	// Setup Services
 	fileService := service.NewFileService(fileRepo, storage)
 
+	//Setup Optimizer
+	optimizer := optimizer.InitOptimizer(storage, utils)
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,
-		Utils:       utils.NewUtils(db),
+		Utils:       utils,
 		FileService: fileService,
+		Optimizer:   optimizer,
 	}
 
 	// Start a new handle

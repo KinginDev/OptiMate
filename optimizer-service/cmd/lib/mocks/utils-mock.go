@@ -40,3 +40,8 @@ func (m *MockUtils) WriteErrorResponse(c echo.Context, status int, message strin
 		"message": message,
 	})
 }
+
+func (m *MockUtils) CheckFileType(f []byte) (string, error) {
+	args := m.Called(f)
+	return args.String(0), args.Error(1)
+}
