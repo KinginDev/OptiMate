@@ -3,7 +3,6 @@ package mocks
 
 import (
 	"encoding/json"
-	"io"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/mock"
@@ -40,9 +39,4 @@ func (m *MockUtils) WriteErrorResponse(c echo.Context, status int, message strin
 	return json.NewEncoder(c.Response()).Encode(map[string]interface{}{
 		"message": message,
 	})
-}
-
-func (m *MockUtils) CheckFileType(file io.ReadCloser) (string, error) {
-	args := m.Called(file)
-	return args.String(0), args.Error(1)
 }

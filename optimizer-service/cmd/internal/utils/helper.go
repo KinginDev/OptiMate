@@ -2,8 +2,6 @@
 package utils
 
 import (
-	"bytes"
-	"image"
 	"log"
 
 	"github.com/labstack/echo/v4"
@@ -13,7 +11,6 @@ import (
 type IUtils interface {
 	WriteErrorResponse(c echo.Context, status int, message string) error
 	WriteSuccessResponse(c echo.Context, status int, message string, data interface{}) error
-	CheckFileType(f []byte) (string, error)
 }
 
 type Utils struct {
@@ -54,27 +51,4 @@ func (u *Utils) WriteSuccessResponse(c echo.Context, status int, message string,
 	}
 	log.Println(response)
 	return c.JSON(status, response)
-}
-
-func (u *Utils) CheckFileType(f []byte) (string, error) {
-	// Decode the file to get the file type
-	_, format, err := image.Decode(bytes.NewReader(f))
-	if err != nil {
-		log.Printf("Error decoding the image:- %v", err)
-		return "", err
-	}
-
-	switch format {
-	case "jpeg", "jpg":
-		return "jpeg", nil
-	case "png":
-		return "png", nil
-	case "webp":
-		return "webp", nil
-	case "gif":
-		return "gif", nil
-	default:
-		return "", nil
-	}
-
 }
