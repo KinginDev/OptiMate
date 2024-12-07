@@ -32,3 +32,21 @@ type IFileRepository interface {
 	CreateFile(file *models.File) error
 	UpdateFile(file *models.File) error
 }
+
+// OptimizerParams is a struct that defines the parameters for the optimizer.
+type OptimizerParams struct {
+	Level      *string
+	Path       *string
+	Name       *string
+	Size       *int64
+	CropParams *CropParams
+}
+
+type CropParams struct {
+	X, Y, Width, Height int
+}
+
+type IOptimizer interface {
+	Optimize(filePath string, file *models.File, oParam *OptimizerParams) (io.ReadCloser, error)
+	SupportedFormats() []string
+}

@@ -86,7 +86,7 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 		Type:         ".jpg",
 	}
 	mockFileService.On("UploadFile", mock.Anything, mock.Anything, mock.Anything).Return(expectedFile, nil)
-	mockOptimizer.On("Optimize", mock.AnythingOfType("string")).Return(
+	mockOptimizer.On("Optimize", mock.AnythingOfType("string"), mock.AnythingOfType("*models.File"), mock.AnythingOfType("*interfaces.OptimizerParams")).Return(
 		ioutil.NopCloser(bytes.NewReader([]byte("optimized content"))),
 		nil,
 	)
@@ -110,6 +110,7 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 	part.Write([]byte("Dummy Data for test"))
+	writer.WriteField("level", "high")
 	writer.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/upload", body)

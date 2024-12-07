@@ -4,19 +4,16 @@ import (
 	"image"
 	"io"
 	"log"
+	"optimizer-service/cmd/internal/app/interfaces"
 
 	"github.com/disintegration/imaging"
 )
-
-type CropParams struct {
-	X, Y, Width, Height int
-}
 
 func (o *Optimizer) SupportedFormats() []string {
 	return []string{"jpeg", "png", "webp"}
 }
 
-func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropParams *CropParams) (image.Image, error) {
+func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropParams *interfaces.CropParams) (image.Image, error) {
 	//Decode the jpeg file
 	img, err := imaging.Decode(fileReader)
 	if err != nil {
@@ -27,7 +24,7 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 	// Check if crop parameters are provided
 	// Then apply the crop
 	if cropParams != nil {
-		img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.Width, cropParams.Height))
+		img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.X+cropParams.Width, cropParams.Y+cropParams.Height))
 	}
 
 	//resize the image
@@ -49,7 +46,7 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 	return img, nil
 }
 
-func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropParams *CropParams) (image.Image, error) {
+func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropParams *interfaces.CropParams) (image.Image, error) {
 	// Decode the png file
 	img, err := imaging.Decode((fileReader))
 	if err != nil {

@@ -94,7 +94,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully uploaded the file, optimization starting soon, you will get an email",
+                        "description": "Successfully optimized the file",
                         "schema": {
                             "$ref": "#/definitions/utils.JSONResponse"
                         }

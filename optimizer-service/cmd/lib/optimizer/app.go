@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
@@ -16,24 +17,11 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-type IOptimizer interface {
-	Optimize(filePath string) (io.ReadCloser, error)
-	SupportedFormats() []string
-}
-
 // Optimizer is a struct that defines the optimizer.
 type Optimizer struct {
 	Storage storage.Storage
 	Utils   utils.IUtils
 	Repo    interfaces.IFileRepository
-}
-
-// OptimizerParams is a struct that defines the parameters for the optimizer.
-type OptimizerParams struct {
-	Level *string
-	Path  *string
-	Name  *string
-	Size  *int64
 }
 
 // NewOptimizer is a function that creates a new optimizer.
@@ -46,7 +34,7 @@ func InitOptimizer(storage storage.Storage, repo interfaces.IFileRepository, u u
 	}
 }
 
-func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
+func (o *Optimizer) Optimize(filePath string, file *models.File, oParam *interfaces.OptimizerParams) (io.ReadCloser, error) {
 	// Retrieve the file
 	fileReader, err := o.Storage.Retrieve(filePath)
 	if err != nil {
@@ -62,15 +50,17 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 
 	// default optimization level
 	level := "high"
-	oParams := OptimizerParams{
-		Level: &level,
+	if oParam.Level != nil && *oParam.Level != "" {
+		level = *oParam.Level
 	}
 
-	cropParams := &CropParams{
-		X:      10,
-		Y:      12,
-		Width:  300,
-		Height: 500,
+	fmt.Println("Level", level)
+
+	// default crop params
+	cropParams := &interfaces.CropParams{}
+
+	if oParam.CropParams != nil {
+		cropParams = oParam.CropParams
 	}
 
 	// Create a buffer to store the unoptimized image as it will be used multiple times
@@ -84,8 +74,9 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	fileReader = io.NopCloser(bytes.NewReader(fileBytes))
 
 	fileType, err := o.Utils.CheckFileType(fileBytes)
+	fileExtension := filepath.Ext(file.OriginalName)
 	if err != nil {
-		log.Printf("Error checking file type:- %v", err)
+		log.Printf("Error checking file type:- %v %s", err, fileExtension)
 		return nil, err
 	}
 
@@ -95,13 +86,15 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	// Add 1 wait group to wait for the go routine to complete
 	wg.Add(1)
 
+	fmt.Println("Does it reach here?", fileType)
+
 	switch fileType {
 	case "jpeg":
 		go func() {
 			// Mark the wait group as done when the go routine completes
 			defer wg.Done()
 
-			optimizedImage, err = o.OptimizeJPEG(fileReader, oParams.Level, cropParams)
+			optimizedImage, err = o.OptimizeJPEG(fileReader, oParam.Level, cropParams)
 			if err != nil {
 				log.Printf("Error optimizing jpeg file:- %v", err)
 				return
@@ -109,19 +102,23 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 
 			// Encode the optimized image and wrtite it to the buffer
 			err = jpeg.Encode(&optimizedBuffer, optimizedImage,
-				&jpeg.Options{Quality: o.mapJPEGQuality(*oParams.Level)})
-
+				&jpeg.Options{Quality: o.mapJPEGQuality(*oParam.Level)})
+			if err != nil {
+				log.Printf("Error encoding optimized image:- %v", err)
+				return
+			}
 			// get the optimizer size
 			intOptimizedSize := int64(optimizedBuffer.Len())
 
 			// update optimizer params
-			oParams.Path = &filePath
-			oParams.Name = &filePath
-			oParams.Size = &intOptimizedSize
-			oParams.Level = &level
+			oParam.Path = &filePath
+			oParam.Name = &filePath
+			oParam.Size = &intOptimizedSize
+			oParam.Level = &level
 
+			err = o.updateOptimizedFileDetails(file, oParam)
 			if err != nil {
-				log.Printf("Error encoding optimized image:- %v", err)
+				log.Printf("Error updating optimized file details:- %v", err)
 				return
 			}
 		}()
@@ -130,25 +127,28 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 		go func() {
 			// Mark the wait group as done when the go routine completes
 			defer wg.Done()
-			optimizedImage, err = o.OptimizePNG(fileReader, oParams.Level, cropParams)
+			optimizedImage, err = o.OptimizePNG(fileReader, oParam.Level, cropParams)
 			if err != nil {
 				log.Printf("Error optimizing png file:- %v", err)
 				return
 			}
 			// encode the optimized image and write it to the buffer
 			err = imaging.Encode(&optimizedBuffer, optimizedImage, imaging.PNG)
-
+			if err != nil {
+				log.Printf("Error encoding optimized image:- %v", err)
+				return
+			}
 			// get the optimizer size
 			intOptimizedSize := int64(optimizedBuffer.Len())
 
 			// update optimizer params
-			oParams.Path = &filePath
-			oParams.Name = &filePath
-			oParams.Size = &intOptimizedSize
-			oParams.Level = &level
-
+			oParam.Path = &filePath
+			oParam.Name = &filePath
+			oParam.Size = &intOptimizedSize
+			oParam.Level = &level
+			err = o.updateOptimizedFileDetails(file, oParam)
 			if err != nil {
-				log.Printf("Error encoding optimized image:- %v", err)
+				log.Printf("Error updating optimized file details:- %v", err)
 				return
 			}
 		}()
@@ -187,12 +187,12 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	return rc, nil
 }
 
-func (o *Optimizer) updateOptimizedFileDetails(file *models.File, optimizerParams OptimizerParams) error {
+func (o *Optimizer) updateOptimizedFileDetails(file *models.File, optimizerParams *interfaces.OptimizerParams) error {
 	file.OptimizedPath = optimizerParams.Path
 	file.OptimizedName = optimizerParams.Name
 	file.OptimizedSize = optimizerParams.Size
 	file.OptimizationLevel = optimizerParams.Level
-	file.Status = models.StatusCompleleted
+	file.Status = models.StatusCompleted
 
 	err := o.Repo.UpdateFile(file)
 	if err != nil {

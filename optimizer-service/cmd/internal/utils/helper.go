@@ -3,6 +3,7 @@ package utils
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"log"
 
@@ -74,7 +75,7 @@ func (u *Utils) CheckFileType(f []byte) (string, error) {
 	case "gif":
 		return "gif", nil
 	default:
-		return "", nil
+		return "", fmt.Errorf("unsupported file type")
 	}
 
 }
