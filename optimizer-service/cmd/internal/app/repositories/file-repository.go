@@ -35,3 +35,7 @@ func (r *FileRepository) GetFile(id string) (*models.File, error) {
 	result := r.DB.First(&file, id)
 	return &file, result.Error
 }
+
+func (r *FileRepository) UpdateFile(file *models.File) error {
+	return r.DB.Save(file).Error
+}

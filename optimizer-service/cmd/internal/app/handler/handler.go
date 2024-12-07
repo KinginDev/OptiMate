@@ -40,7 +40,7 @@ func (h *Handler) HomePage(c echo.Context) error {
 // @Accept mpfd
 // @Produce json
 // @Param file formData file true "File to upload"
-// @Success 200 {object} utils.JSONResponse "Successfully uploaded the file, optimization starting soon, you will get an email"
+// @Success 200 {object} utils.JSONResponse "Successfully optimized the file"
 // @Failure 400 {object} utils.JSONResponse "Error uploading file"
 // @Router /upload [post]
 func (h *Handler) PostUploadFile(c echo.Context) error {
@@ -78,7 +78,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	}
 
 	fmt.Printf("Optimized file: %+v\n", optimizedFile)
-	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", uploadedFile)
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully optimized the file", uploadedFile)
 }
 
 // LoginUser godoc

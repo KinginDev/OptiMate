@@ -30,4 +30,5 @@ type IFileService interface {
 // IFileRepository is an interface for the file repository
 type IFileRepository interface {
 	CreateFile(file *models.File) error
+	UpdateFile(file *models.File) error
 }

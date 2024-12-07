@@ -13,6 +13,7 @@ type AppContainer struct {
 	Utils       utils.IUtils
 	FileService interfaces.IFileService // interface
 	AuthService interfaces.IAuthService
+	Optimizer   optimizer.IOptimizer
 }
 
 type LoginInput struct {

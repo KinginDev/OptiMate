@@ -38,7 +38,7 @@ func main() {
 	//Setup Interceptors
 	authInterceptor := interceptor.AuthenticationMiddleware(authService)
 	//Setup Optimizer
-	optimizer := optimizer.InitOptimizer(storage, utils)
+	optimizer := optimizer.InitOptimizer(storage, fileRepo, utils)
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,

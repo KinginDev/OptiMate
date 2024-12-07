@@ -6,6 +6,8 @@ import (
 	"image/jpeg"
 	"io"
 	"log"
+	"optimizer-service/cmd/internal/app/interfaces"
+	"optimizer-service/cmd/internal/models"
 	"optimizer-service/cmd/internal/storage"
 	"optimizer-service/cmd/internal/utils"
 	"path/filepath"
@@ -23,19 +25,24 @@ type IOptimizer interface {
 type Optimizer struct {
 	Storage storage.Storage
 	Utils   utils.IUtils
+	Repo    interfaces.IFileRepository
 }
 
 // OptimizerParams is a struct that defines the parameters for the optimizer.
 type OptimizerParams struct {
 	Level *string
+	Path  *string
+	Name  *string
+	Size  *int64
 }
 
 // NewOptimizer is a function that creates a new optimizer.
 // constructor
-func InitOptimizer(storage storage.Storage, u utils.IUtils) *Optimizer {
+func InitOptimizer(storage storage.Storage, repo interfaces.IFileRepository, u utils.IUtils) *Optimizer {
 	return &Optimizer{
 		Storage: storage,
 		Utils:   u,
+		Repo:    repo,
 	}
 }
 
@@ -53,6 +60,7 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	var optimizedBuffer bytes.Buffer
 	var optimizedImage image.Image
 
+	// default optimization level
 	level := "high"
 	oParams := OptimizerParams{
 		Level: &level,
@@ -102,6 +110,16 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 			// Encode the optimized image and wrtite it to the buffer
 			err = jpeg.Encode(&optimizedBuffer, optimizedImage,
 				&jpeg.Options{Quality: o.mapJPEGQuality(*oParams.Level)})
+
+			// get the optimizer size
+			intOptimizedSize := int64(optimizedBuffer.Len())
+
+			// update optimizer params
+			oParams.Path = &filePath
+			oParams.Name = &filePath
+			oParams.Size = &intOptimizedSize
+			oParams.Level = &level
+
 			if err != nil {
 				log.Printf("Error encoding optimized image:- %v", err)
 				return
@@ -119,6 +137,16 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 			}
 			// encode the optimized image and write it to the buffer
 			err = imaging.Encode(&optimizedBuffer, optimizedImage, imaging.PNG)
+
+			// get the optimizer size
+			intOptimizedSize := int64(optimizedBuffer.Len())
+
+			// update optimizer params
+			oParams.Path = &filePath
+			oParams.Name = &filePath
+			oParams.Size = &intOptimizedSize
+			oParams.Level = &level
+
 			if err != nil {
 				log.Printf("Error encoding optimized image:- %v", err)
 				return
@@ -133,6 +161,7 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	// Wait for the optimization to complete
 	wg.Wait()
 
+	// generate the optimized file name
 	fileName := filepath.Base(filePath)
 	ext := filepath.Ext(fileName)
 	optimizedFileName := fileName[:len(fileName)-len(ext)] + "_optimized" + ext
@@ -156,4 +185,19 @@ func (o *Optimizer) Optimize(filePath string) (io.ReadCloser, error) {
 	}()
 
 	return rc, nil
+}
+
+func (o *Optimizer) updateOptimizedFileDetails(file *models.File, optimizerParams OptimizerParams) error {
+	file.OptimizedPath = optimizerParams.Path
+	file.OptimizedName = optimizerParams.Name
+	file.OptimizedSize = optimizerParams.Size
+	file.OptimizationLevel = optimizerParams.Level
+	file.Status = models.StatusCompleleted
+
+	err := o.Repo.UpdateFile(file)
+	if err != nil {
+		log.Printf("Error updating optimized file details:- %v", err)
+		return err
+	}
+	return nil
 }
