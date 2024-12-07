@@ -1,7 +1,7 @@
 package types
 
 import (
-	"optimizer-service/cmd/internal/app/service"
+	"optimizer-service/cmd/internal/app/interfaces"
 	"optimizer-service/cmd/internal/utils"
 	"optimizer-service/cmd/lib/optimizer"
 
@@ -11,6 +11,16 @@ import (
 type AppContainer struct {
 	DB          *gorm.DB
 	Utils       utils.IUtils
-	FileService service.IFileService // interface
-	Optimizer   optimizer.IOptimizer // Optimizer interface
+	FileService interfaces.IFileService // interface
+	AuthService interfaces.IAuthService
+}
+
+type LoginInput struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type ResponsePayload struct {
+	Data      interface{}          `json:"data"`
+	Optimizer optimizer.IOptimizer // Optimizer interface
 }

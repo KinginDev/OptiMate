@@ -21,6 +21,35 @@ paths:
           schema:
             $ref: '#/definitions/utils.JSONResponse'
       summary: Index Welcome
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "401":
+          description: Invalid password
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "500":
+          description: Failed to create token
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+      summary: Login a user
   /upload:
     post:
       consumes:

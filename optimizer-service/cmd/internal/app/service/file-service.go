@@ -3,7 +3,7 @@ package service
 import (
 	"io"
 	"log"
-	"optimizer-service/cmd/internal/app/repositories"
+	"optimizer-service/cmd/internal/app/interfaces"
 	"optimizer-service/cmd/internal/models"
 	"optimizer-service/cmd/internal/storage"
 	"path/filepath"
@@ -11,22 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// IFileService is an interface for the file service
-// It defines the methods that the file service should implement
-type IFileService interface {
-	UploadFile(userID string, fileData io.Reader, fileName string) (*models.File, error)
-}
-
 // FileService is a struct for the file service
 // It implements the IFileService interface
 type FileService struct {
-	Repo    repositories.IFileRepository
+	Repo    interfaces.IFileRepository
 	Storage storage.Storage
 }
 
 // NewFileService creates a new file service
 // It returns a pointer to the file service
-func NewFileService(r repositories.IFileRepository, storage storage.Storage) *FileService {
+func NewFileService(r interfaces.IFileRepository, storage storage.Storage) *FileService {
 	return &FileService{
 		Repo:    r,
 		Storage: storage,

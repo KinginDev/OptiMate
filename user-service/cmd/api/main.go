@@ -57,13 +57,14 @@ func main() {
 	e.GET("/", h.Index)
 	e.POST("/register", h.Register)
 	e.POST("/login", h.Login)
-
+	e.POST("/validate", h.ValidateUserToken)
 	// Docs Routes
 	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	authGroup := e.Group("profile")
 	// Middleware
 	authGroup.Use(interceptor.JWTAuthentication(jwtService))
+
 	authGroup.GET("/tokens", h.GetUserJWTTokens)
 
 	userServicePort := os.Getenv("PORT")

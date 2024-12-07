@@ -41,10 +41,13 @@ func setUpTest() (*echo.Echo, *types.AppContainer) {
 	fileService := service.NewFileService(fileRepo, &storage.LocalStorage{
 		BasePath: "uploads",
 	})
+	authRepo := repositories.NewAuthRepository(db)
+	authService := service.NewAuthService(authRepo)
 	container := &types.AppContainer{
 		Utils:       utils.NewUtils(db),
 		DB:          db,
 		FileService: fileService,
+		AuthService: authService,
 	}
 
 	return e, container
@@ -104,9 +107,28 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/upload", body)
 	req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
-	rec := httptest.NewRecorder()
+	// Add authentication header (replace with actual token if needed)
+	req.Header.Set(echo.HeaderAuthorization, "Bearer valid_token")
 
+	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
+
+	// Add authentication middleware
+	authMiddleware := func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Simulate authentication (replace with actual auth logic)
+			authHeader := c.Request().Header.Get(echo.HeaderAuthorization)
+			if authHeader != "Bearer valid_token" {
+				return echo.ErrUnauthorized
+			}
+			return next(c)
+		}
+	}
+
+	// Add the middleware and route to the Echo instance
+	authGroup := e.Group("/auth")
+	authGroup.Use(authMiddleware)
+	authGroup.POST("/upload", handler.PostUploadFile)
 
 	// assert that the file was uploaded successfully
 	if assert.NoError(t, handler.PostUploadFile(c)) {
@@ -173,4 +195,15 @@ func TestPostUploadFileWithFailure(t *testing.T) {
 	}
 
 	mockFileService.AssertExpectations(t)
+}
+
+func TestLoginWithValidData(t *testing.T) {
+
+	mockAuthRepo := new(mocks.MockAuthRepository)
+	authService := service.NewAuthService(mockAuthRepo)
+
+	mockAuthRepo.On("LoginWithREST", mock.Anything, mock.Anything).Return(&types.ResponsePayload{}, nil)
+	_, err := authService.Login("admin@admin.com", "password")
+	assert.NoError(t, err)
+	mockAuthRepo.AssertExpectations(t)
 }
