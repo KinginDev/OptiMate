@@ -15,3 +15,7 @@ type AppContainer struct {
 	UserService *service.UserService
 	JWTService  *service.JWTService
 }
+
+type TokenString struct {
+	Token string `json:"token"`
+}

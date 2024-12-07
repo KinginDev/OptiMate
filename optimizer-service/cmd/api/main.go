@@ -4,6 +4,7 @@ package main
 import (
 	"optimizer-service/cmd/config"
 	"optimizer-service/cmd/internal/app/handler"
+	"optimizer-service/cmd/internal/app/interceptor"
 	"optimizer-service/cmd/internal/app/repositories"
 	"optimizer-service/cmd/internal/app/service"
 	"optimizer-service/cmd/internal/types"
@@ -26,15 +27,21 @@ func main() {
 
 	// Setup Repositories
 	fileRepo := repositories.NewFileRepository(db)
+	authRepo := repositories.NewAuthRepository(db)
 
 	// Setup Services
 	fileService := service.NewFileService(fileRepo, storage)
+	authService := service.NewAuthService(authRepo)
+	//Setup AuthService
 
+	//Setup Interceptors
+	authInterceptor := interceptor.AuthenticationMiddleware(authService)
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,
 		Utils:       utils.NewUtils(db),
 		FileService: fileService,
+		AuthService: authService,
 	}
 
 	// Start a new handle
@@ -53,8 +60,12 @@ func main() {
 
 	e.GET("/", h.HomePage)
 	e.GET("/docs/*", echoSwagger.WrapHandler)
+	e.POST("/login", h.LoginUser)
 
-	e.POST("/upload", h.PostUploadFile)
+	authGroup := e.Group("/protected")
+
+	authGroup.Use(authInterceptor)
+	authGroup.POST("/upload", h.PostUploadFile, authInterceptor)
 
 	optimizerServicePort := os.Getenv("PORT")
 	e.Logger.Fatal(e.Start(":" + optimizerServicePort))

@@ -1,3 +1,4 @@
+// Package repositories
 package repositories
 
 import (
@@ -5,11 +6,6 @@ import (
 
 	"gorm.io/gorm"
 )
-
-// IFileRepository is an interface for the file repository
-type IFileRepository interface {
-	CreateFile(file *models.File) error
-}
 
 // FileRepository is a struct for the file repository
 // It implements the IFileRepository interface

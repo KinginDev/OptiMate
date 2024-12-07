@@ -134,4 +134,33 @@ paths:
       summary: get toksn
       tags:
       - user
+  /validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate a user token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token is valid
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+        "500":
+          description: Failed to validate token
+          schema:
+            $ref: '#/definitions/utils.JSONResponse'
+      security:
+      - Bearer: []
+      summary: Validate a user token
+      tags:
+      - user
 swagger: "2.0"
