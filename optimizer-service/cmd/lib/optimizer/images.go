@@ -71,6 +71,7 @@ func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropPar
 	case "high":
 		img = imaging.Resize(img, img.Bounds().Dx()/4, 0, imaging.Lanczos)
 	default:
+		// Default should be medium compression
 		img = imaging.Resize(img, img.Bounds().Dx()/2, 0, imaging.Lanczos)
 	}
 
