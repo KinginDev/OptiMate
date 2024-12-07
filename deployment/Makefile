@@ -17,7 +17,7 @@ build_optimizer_service:
 	cd ../optimizer-service && env GOOS=linux CGO_ENABLED=0 go build -o ${OPTIMIZER_SERVICE_BINARY} ./cmd/api/main.go
 	@echo "Optimizer service build completed"
 
-build_backend: build_user_service build_optimizer_service
+build: build_user_service build_optimizer_service
 	@echo "Building backend"
 	docker-compose up --build -d
 	@echo "Backend build completed"
