@@ -59,6 +59,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		if err != nil {
 			log.Printf("Error converting cropWidth to int %v", err)
 		}
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop width")
 	}
 	cropHeight := c.FormValue("cropHeight")
 	if cropHeight != "" {
@@ -66,12 +67,14 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		if err != nil {
 			log.Printf("Error converting cropHeight to int %v", err)
 		}
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop height")
 	}
 	cropX := c.FormValue("cropX")
 	if cropX != "" {
 		cropXInt, err = strconv.Atoi(cropX)
 		if err != nil {
 			log.Printf("Error converting cropX to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop x")
 		}
 	}
 	cropY := c.FormValue("cropY")
@@ -79,6 +82,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		cropYInt, err = strconv.Atoi(cropY)
 		if err != nil {
 			log.Printf("Error converting cropY to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop y")
 		}
 	}
 	// Build the optimizer params to be passed as arguments to the optimizer

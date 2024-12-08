@@ -21,8 +21,7 @@ type LoginInput struct {
 }
 
 type ResponsePayload struct {
-	Data      interface{}           `json:"data"`
-	Optimizer interfaces.IOptimizer // Optimizer interface
+	Data interface{} `json:"data"`
 }
 
 type GenericInput[T any] struct {
