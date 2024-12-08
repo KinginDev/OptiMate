@@ -58,16 +58,18 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		cropWidthInt, err = strconv.Atoi(cropWidth)
 		if err != nil {
 			log.Printf("Error converting cropWidth to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop width")
 		}
-		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop width")
+
 	}
 	cropHeight := c.FormValue("cropHeight")
 	if cropHeight != "" {
 		cropHeightInt, err = strconv.Atoi(cropHeight)
 		if err != nil {
 			log.Printf("Error converting cropHeight to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop height")
 		}
-		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop height")
+
 	}
 	cropX := c.FormValue("cropX")
 	if cropX != "" {
