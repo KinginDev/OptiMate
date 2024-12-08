@@ -42,6 +42,11 @@ func (h *Handler) HomePage(c echo.Context) error {
 // @Accept mpfd
 // @Produce json
 // @Param file formData file true "File to upload"
+// @Param level formData string false "Optimization level"
+// @Param cropWidth formData string false "Crop width"
+// @Param cropHeight formData string false "Crop height"
+// @Param cropX formData string false "Crop x"
+// @Param cropY formData string false "Crop y"
 // @Success 200 {object} utils.JSONResponse "Successfully optimized the file"
 // @Failure 400 {object} utils.JSONResponse "Error uploading file"
 // @Router /protected/upload [post]

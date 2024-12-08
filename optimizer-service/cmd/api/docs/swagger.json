@@ -79,6 +79,36 @@
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optimization level",
+                        "name": "level",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop width",
+                        "name": "cropWidth",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop height",
+                        "name": "cropHeight",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop x",
+                        "name": "cropX",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop y",
+                        "name": "cropY",
+                        "in": "formData"
                     }
                 ],
                 "responses": {

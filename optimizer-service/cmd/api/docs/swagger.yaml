@@ -61,6 +61,26 @@ paths:
         name: file
         required: true
         type: file
+      - description: Optimization level
+        in: formData
+        name: level
+        type: string
+      - description: Crop width
+        in: formData
+        name: cropWidth
+        type: string
+      - description: Crop height
+        in: formData
+        name: cropHeight
+        type: string
+      - description: Crop x
+        in: formData
+        name: cropX
+        type: string
+      - description: Crop y
+        in: formData
+        name: cropY
+        type: string
       produces:
       - application/json
       responses:
