@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"log"
 	"optimizer-service/cmd/internal/app/interfaces"
@@ -13,6 +11,8 @@ import (
 	"optimizer-service/cmd/internal/storage"
 	"optimizer-service/cmd/internal/utils"
 	"path/filepath"
+
+	"github.com/disintegration/imaging"
 )
 
 // Optimizer is a struct that defines the optimizer.
@@ -73,15 +73,8 @@ func (o *Optimizer) Optimize(filePath string, file *models.File, oParam *interfa
 	}
 	log.Printf("Using optimization level: %s", level)
 
-	// Set default crop params
-	var cropParams *interfaces.CropParams
-	if oParam.CropParams != nil && oParam.CropParams.Width > 0 && oParam.CropParams.Height > 0 {
-		cropParams = oParam.CropParams
-		log.Printf("Applying crop: x=%d, y=%d, width=%d, height=%d",
-			cropParams.X, cropParams.Y, cropParams.Width, cropParams.Height)
-	} else {
-		log.Printf("No crop parameters provided or invalid dimensions")
-	}
+	levelConfig := LevelConfigurations[getLevelOrDefault(oParam.Level)]
+	cropParams := oParam.CropParams
 
 	// Create new reader from bytes for image processing
 	fileReader = io.NopCloser(bytes.NewReader(fileBytes))
@@ -120,12 +113,21 @@ func (o *Optimizer) Optimize(filePath string, file *models.File, oParam *interfa
 	// Encode based on file type
 	switch format {
 	case "jpeg":
-		quality := o.mapJPEGQuality(level)
-		log.Printf("Encoding JPEG with quality: %d", quality)
-		err = jpeg.Encode(&optimizedBuffer, optimizedImage, &jpeg.Options{Quality: quality})
+		log.Printf("Encoding JPEG with quality: %d", levelConfig.JPEGQuality)
+		err = imaging.Encode(&optimizedBuffer, optimizedImage, imaging.JPEG, imaging.JPEGQuality(levelConfig.JPEGQuality))
+		if err != nil {
+			log.Printf("Error encoding jpeg file %v", err)
+			return nil, err
+		}
 	case "png":
 		log.Printf("Encoding PNG")
-		err = png.Encode(&optimizedBuffer, optimizedImage)
+		err = imaging.Encode(&optimizedBuffer, optimizedImage, imaging.PNG, imaging.PNGCompressionLevel(levelConfig.PNGCompression))
+		if err != nil {
+			log.Printf("Error encoding png file %v", err)
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
 
 	if err != nil {

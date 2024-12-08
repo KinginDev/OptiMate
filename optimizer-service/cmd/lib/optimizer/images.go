@@ -1,7 +1,6 @@
 package optimizer
 
 import (
-	"bytes"
 	"errors"
 	"image"
 	"image/png"
@@ -20,7 +19,7 @@ type LevelConfig struct {
 	PNGCompression png.CompressionLevel
 }
 
-var LevelConfigs = map[string]LevelConfig{
+var LevelConfigurations = map[string]LevelConfig{
 	"low": {
 		ScaleFactor:    1.0,
 		ApplySharpen:   false,
@@ -63,23 +62,7 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 		return nil, err
 	}
 
-	// Further optimize the jpeg file
-	var buf bytes.Buffer
-	config := LevelConfigs[getLevelOrDefault(level)]
-	err = imaging.Encode(&buf, img, imaging.JPEG, imaging.JPEGQuality(config.JPEGQuality))
-	if err != nil {
-		log.Printf("Error encoding jpeg file %v", err)
-		return nil, err
-	}
-
-	//convert the bytes to an image
-	finalImage, err := imaging.Decode(&buf)
-	if err != nil {
-		log.Printf("Error decoding jpeg file %v", err)
-		return nil, err
-	}
-
-	return finalImage, nil
+	return img, nil
 }
 
 func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropParams *interfaces.CropParams) (image.Image, error) {
@@ -97,22 +80,7 @@ func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropPar
 		return nil, err
 	}
 
-	config := LevelConfigs[getLevelOrDefault(level)]
-	var buf bytes.Buffer
-	err = imaging.Encode(&buf, img, imaging.PNG, imaging.PNGCompressionLevel(config.PNGCompression))
-	if err != nil {
-		log.Printf("Error encoding png file %v", err)
-		return nil, err
-	}
-
-	//convert the bytes to an image
-	finalImage, err := imaging.Decode(&buf)
-	if err != nil {
-		log.Printf("Error decoding png file %v", err)
-		return nil, err
-	}
-
-	return finalImage, nil
+	return img, nil
 }
 
 func (o *Optimizer) mapJPEGQuality(level string) int {
@@ -135,7 +103,7 @@ func (p *Optimizer) optimizeImage(img image.Image, level *string, cropParams *in
 		return nil, errors.New("image must be provided")
 	}
 	bounds := img.Bounds()
-	config := LevelConfigs[getLevelOrDefault(level)]
+	config := LevelConfigurations[getLevelOrDefault(level)]
 
 	// If crop parameters are not provided or invalid, use default or full image dimensions
 	if cropParams == nil || (cropParams.Width <= 0 || cropParams.Height <= 0) {
