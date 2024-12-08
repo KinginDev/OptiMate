@@ -21,11 +21,25 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 		return nil, err
 	}
 
-	// Check if crop parameters are provided
-	// Then apply the crop
-	if cropParams != nil {
-		img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.X+cropParams.Width, cropParams.Y+cropParams.Height))
+	bounds := img.Bounds()
+
+	// If crop parameters are not provided or invalid, use default or full image dimensions
+	if cropParams == nil || (cropParams.Width <= 0 || cropParams.Height <= 0) {
+		// Try to use default dimensions while maintaining aspect ratio
+		cropParams = &interfaces.CropParams{
+			X:      0,
+			Y:      0,
+			Width:  bounds.Dx(),
+			Height: bounds.Dy(),
+		}
+
+		log.Printf("Using default crop dimensions: %dx%d", cropParams.Width, cropParams.Height)
+
+		// Apply the crop
+
 	}
+
+	img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.X+cropParams.Width, cropParams.Y+cropParams.Height))
 
 	//resize the image
 	// Apply different techniques based on the optimization level
@@ -34,10 +48,10 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 		// Low compression, resize to the same size
 		img = imaging.Resize(img, img.Bounds().Dx(), img.Bounds().Dy(), imaging.Lanczos)
 	case "medium":
-		// Moderrate  compression, resize to half the size
+		// Moderate compression, resize to half the size
 		img = imaging.Resize(img, img.Bounds().Dx()/2, 0, imaging.Lanczos)
 	case "high":
-		// High compression, agressive resize and lossy
+		// High compression, aggressive resize and lossy
 		img = imaging.Resize(img, img.Bounds().Dx()/4, 0, imaging.Lanczos)
 	default:
 		// default to medium compression if no level is provided
@@ -48,16 +62,29 @@ func (o *Optimizer) OptimizeJPEG(fileReader io.ReadCloser, level *string, cropPa
 
 func (o *Optimizer) OptimizePNG(fileReader io.ReadCloser, level *string, cropParams *interfaces.CropParams) (image.Image, error) {
 	// Decode the png file
-	img, err := imaging.Decode((fileReader))
+	img, err := imaging.Decode(fileReader)
 	if err != nil {
 		log.Printf("Error decoding png file %v", err)
 		return nil, err
 	}
 
-	// Check if crop parameters are provided
-	if cropParams != nil {
-		img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.Width, cropParams.Height))
+	bounds := img.Bounds()
+
+	// If crop parameters are not provided or invalid, use default or full image dimensions
+	if cropParams == nil || (cropParams.Width <= 0 || cropParams.Height <= 0) {
+		// Try to use default dimensions while maintaining aspect ratio
+		cropParams = &interfaces.CropParams{
+			X:      0,
+			Y:      0,
+			Width:  bounds.Dx(),
+			Height: bounds.Dy(),
+		}
+
+		log.Printf("Using default crop dimensions: %dx%d", cropParams.Width, cropParams.Height)
 	}
+
+	// Apply the crop
+	img = imaging.Crop(img, image.Rect(cropParams.X, cropParams.Y, cropParams.X+cropParams.Width, cropParams.Y+cropParams.Height))
 
 	// Apply different techniques based on the optimization level
 	switch *level {

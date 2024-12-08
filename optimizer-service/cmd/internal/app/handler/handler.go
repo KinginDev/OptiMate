@@ -123,7 +123,7 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 	}
 
 	fmt.Printf("Optimized file: %+v\n", optimizedFile)
-	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully optimized the file", optimizedFile)
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully optimized the file", uploadedFile)
 }
 
 // LoginUser godoc
