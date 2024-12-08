@@ -12,6 +12,7 @@ type AppContainer struct {
 	Utils       utils.IUtils
 	FileService interfaces.IFileService // interface
 	AuthService interfaces.IAuthService
+	Optimizer   interfaces.IOptimizer
 }
 
 type LoginInput struct {
@@ -21,4 +22,8 @@ type LoginInput struct {
 
 type ResponsePayload struct {
 	Data interface{} `json:"data"`
+}
+
+type GenericInput[T any] struct {
+	Data T `json:"data"`
 }

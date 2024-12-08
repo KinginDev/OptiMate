@@ -40,3 +40,10 @@ func (m *MockUtils) WriteErrorResponse(c echo.Context, status int, message strin
 		"message": message,
 	})
 }
+
+// CheckFileType
+// CheckFileType is a mocked object that checks the file type
+func (m *MockUtils) CheckFileType(f []byte) (string, error) {
+	args := m.Called(f)
+	return args.String(0), args.Error(1)
+}

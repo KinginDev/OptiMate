@@ -64,9 +64,9 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "9700:9000"
-      - "9007:9001"
-    command: server /data --console-address ":9001" --address ":9000"
+      - "9700:9000" # minio port
+      - "9007:9002" # minio console port
+    command: server /data --console-address ":9002" --address ":9000"
     volumes:
       - ./minio/data:/data
     networks:

@@ -9,6 +9,7 @@ import (
 	"optimizer-service/cmd/internal/app/service"
 	"optimizer-service/cmd/internal/types"
 	"optimizer-service/cmd/internal/utils"
+	"optimizer-service/cmd/lib/optimizer"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -24,7 +25,7 @@ func main() {
 	app := config.NewConfig()
 	db := app.InitDB()
 	storage := app.InitStorage()
-
+	utils := utils.NewUtils(db)
 	// Setup Repositories
 	fileRepo := repositories.NewFileRepository(db)
 	authRepo := repositories.NewAuthRepository(db)
@@ -36,12 +37,15 @@ func main() {
 
 	//Setup Interceptors
 	authInterceptor := interceptor.AuthenticationMiddleware(authService)
+	//Setup Optimizer
+	optimizer := optimizer.InitOptimizer(storage, fileRepo, utils)
 	// Init App Container
 	container := &types.AppContainer{
 		DB:          db,
-		Utils:       utils.NewUtils(db),
+		Utils:       utils,
 		FileService: fileService,
 		AuthService: authService,
+		Optimizer:   optimizer,
 	}
 
 	// Start a new handle

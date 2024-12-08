@@ -4,6 +4,7 @@ package handler
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -73,7 +74,7 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 	e := echo.New()
 	mockFileService := new(mocks.MockFileService)
 	mockUtils := new(mocks.MockUtils)
-
+	mockOptimizer := new(mocks.MockOptimizer)
 	// Setup expected file
 	expectedFile := &models.File{
 		ID:           uuid.New().String(),
@@ -85,12 +86,18 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 		Type:         ".jpg",
 	}
 	mockFileService.On("UploadFile", mock.Anything, mock.Anything, mock.Anything).Return(expectedFile, nil)
-	mockUtils.On("WriteSuccessResponse", mock.Anything, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", mock.Anything).Return(nil)
+	mockOptimizer.On("Optimize", mock.AnythingOfType("string"), mock.AnythingOfType("*models.File"), mock.AnythingOfType("*interfaces.OptimizerParams")).Return(
+		ioutil.NopCloser(bytes.NewReader([]byte("optimized content"))),
+		nil,
+	)
+	mockUtils.On("WriteSuccessResponse", mock.Anything, http.StatusOK, "Successfully optimized the file", mock.Anything).Return(nil)
+	mockOptimizer.On("SupportedFormats").Return([]string{".jpg", ".png"})
 
 	// Create a handler
 	container := &types.AppContainer{
 		Utils:       mockUtils,
 		FileService: mockFileService,
+		Optimizer:   mockOptimizer,
 	}
 
 	handler := NewHandler(container)
@@ -103,6 +110,7 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 	part.Write([]byte("Dummy Data for test"))
+	writer.WriteField("level", "high")
 	writer.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/upload", body)
@@ -134,7 +142,7 @@ func TestPostUploadFileWithSuccess(t *testing.T) {
 	if assert.NoError(t, handler.PostUploadFile(c)) {
 		fmt.Println(rec.Body.String())
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Contains(t, rec.Body.String(), "Successfully uploaded the file, optimization starting soon, you will get an email")
+		assert.Contains(t, rec.Body.String(), "Successfully optimized the file")
 	}
 
 	mockFileService.AssertExpectations(t)

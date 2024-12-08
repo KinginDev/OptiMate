@@ -14,6 +14,7 @@ type MockFileRepository struct {
 type MockAuthRepository struct {
 	mock.Mock
 }
+
 // CreateFile is a mocked method
 func (m *MockFileRepository) CreateFile(file *models.File) error {
 	args := m.Called(file)
@@ -25,7 +26,12 @@ func (m *MockAuthRepository) LoginWithREST(username string, password string) (in
 	return args.Get(0), args.Error(1)
 }
 
-func (m *MockAuthRepository) ValidateToken(token string) (interface{},error) {
+func (m *MockAuthRepository) ValidateToken(token string) (interface{}, error) {
 	args := m.Called(token)
 	return args.Get(0), args.Error(1)
+}
+
+func (m *MockFileRepository) UpdateFile(file *models.File) error {
+	args := m.Called(file)
+	return args.Error(0)
 }

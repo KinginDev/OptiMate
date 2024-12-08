@@ -2,9 +2,12 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"optimizer-service/cmd/internal/app/interfaces"
 	"optimizer-service/cmd/internal/types"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -39,17 +42,69 @@ func (h *Handler) HomePage(c echo.Context) error {
 // @Accept mpfd
 // @Produce json
 // @Param file formData file true "File to upload"
-// @Success 200 {object} utils.JSONResponse "Successfully uploaded the file, optimization starting soon, you will get an email"
+// @Param level formData string false "Optimization level"
+// @Param cropWidth formData string false "Crop width"
+// @Param cropHeight formData string false "Crop height"
+// @Param cropX formData string false "Crop x"
+// @Param cropY formData string false "Crop y"
+// @Success 200 {object} utils.JSONResponse "Successfully optimized the file"
 // @Failure 400 {object} utils.JSONResponse "Error uploading file"
-// @Router /upload [post]
+// @Router /protected/upload [post]
 func (h *Handler) PostUploadFile(c echo.Context) error {
 	userId := uuid.New().String()
 
 	// Get the submitted file
 	file, err := c.FormFile("file")
+	var cropWidthInt, cropHeightInt, cropXInt, cropYInt int
+
+	level := c.FormValue("level")
+	cropWidth := c.FormValue("cropWidth")
+	if cropWidth != "" {
+		cropWidthInt, err = strconv.Atoi(cropWidth)
+		if err != nil {
+			log.Printf("Error converting cropWidth to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop width")
+		}
+
+	}
+	cropHeight := c.FormValue("cropHeight")
+	if cropHeight != "" {
+		cropHeightInt, err = strconv.Atoi(cropHeight)
+		if err != nil {
+			log.Printf("Error converting cropHeight to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop height")
+		}
+
+	}
+	cropX := c.FormValue("cropX")
+	if cropX != "" {
+		cropXInt, err = strconv.Atoi(cropX)
+		if err != nil {
+			log.Printf("Error converting cropX to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop x")
+		}
+	}
+	cropY := c.FormValue("cropY")
+	if cropY != "" {
+		cropYInt, err = strconv.Atoi(cropY)
+		if err != nil {
+			log.Printf("Error converting cropY to int %v", err)
+			return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, "Invalid crop y")
+		}
+	}
+	// Build the optimizer params to be passed as arguments to the optimizer
+	oParam := &interfaces.OptimizerParams{
+		Level: &level,
+		CropParams: &interfaces.CropParams{
+			Width:  cropWidthInt,
+			Height: cropHeightInt,
+			X:      cropXInt,
+			Y:      cropYInt,
+		},
+	}
 	if err != nil {
 		log.Printf("Error getting file from form data %v", err)
-		return h.Container.Utils.WriteErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
 	// Open the file
@@ -69,7 +124,17 @@ func (h *Handler) PostUploadFile(c echo.Context) error {
 		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully uploaded the file, optimization starting soon, you will get an email", uploadedFile)
+	fmt.Printf("Uploaded file: %+v\n", uploadedFile)
+
+	optimizedFile, err := h.Container.Optimizer.Optimize(uploadedFile.OriginalName, uploadedFile, oParam)
+	if err != nil {
+		log.Printf("Error optimizing file %v", err)
+		err = fmt.Errorf("error optimizing file %s: ERROR %v", uploadedFile.OriginalName, err)
+		return h.Container.Utils.WriteErrorResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	fmt.Printf("Optimized file: %+v\n", optimizedFile)
+	return h.Container.Utils.WriteSuccessResponse(c, http.StatusOK, "Successfully optimized the file", uploadedFile)
 }
 
 // LoginUser godoc

@@ -73,7 +73,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/upload": {
+        "/protected/upload": {
             "post": {
                 "description": "Upload a file",
                 "consumes": [
@@ -90,11 +90,41 @@ const docTemplate = `{
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optimization level",
+                        "name": "level",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop width",
+                        "name": "cropWidth",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop height",
+                        "name": "cropHeight",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop x",
+                        "name": "cropX",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Crop y",
+                        "name": "cropY",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully uploaded the file, optimization starting soon, you will get an email",
+                        "description": "Successfully optimized the file",
                         "schema": {
                             "$ref": "#/definitions/utils.JSONResponse"
                         }
