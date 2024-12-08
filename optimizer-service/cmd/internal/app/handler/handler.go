@@ -44,7 +44,7 @@ func (h *Handler) HomePage(c echo.Context) error {
 // @Param file formData file true "File to upload"
 // @Success 200 {object} utils.JSONResponse "Successfully optimized the file"
 // @Failure 400 {object} utils.JSONResponse "Error uploading file"
-// @Router /upload [post]
+// @Router /protected/upload [post]
 func (h *Handler) PostUploadFile(c echo.Context) error {
 	userId := uuid.New().String()
 

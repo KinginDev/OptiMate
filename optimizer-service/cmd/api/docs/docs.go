@@ -73,7 +73,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/upload": {
+        "/protected/upload": {
             "post": {
                 "description": "Upload a file",
                 "consumes": [

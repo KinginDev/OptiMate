@@ -50,7 +50,7 @@ paths:
           schema:
             $ref: '#/definitions/utils.JSONResponse'
       summary: Login a user
-  /upload:
+  /protected/upload:
     post:
       consumes:
       - multipart/form-data
